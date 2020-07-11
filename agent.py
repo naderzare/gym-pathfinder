@@ -1,6 +1,6 @@
 import gym
 
-env = gym.make('gym_imagepath:ImagePath-v0')
+env = gym.make('gym_pathfinder:PathFinder-v0')
 
 obs = env.reset()
 env.render()

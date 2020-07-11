@@ -4,12 +4,12 @@ import numpy as np
 import random
 
 
-class ImagePathEnv(gym.Env):
+class PathFinderEnv(gym.Env):
     """Custom Environment that follows gym interface"""
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
-        super(ImagePathEnv, self).__init__()
+        super(PathFinderEnv, self).__init__()
         self.sparse_reward = False
         self.count_i = 10
         self.count_j = 10
