@@ -1,1 +1,1 @@
-from gym_pathfinder.envs.pathfinder_env import ImagePathEnv
+from gym_pathfinder.envs.pathfinder_env import PathFinderEnv
