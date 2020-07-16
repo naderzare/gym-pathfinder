@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+<!--    <script type="text/javascript" src="sample.js"></script>-->
+    <script src="sample.js"></script>
+</head>
+<style>
+    table {
+      border-collapse: collapse;
+    }
+
+    table, th, td {
+      border: 1px solid black;
+    }
+</style>
+
+<body>
+    <table id="table">
+    </table>
+    <button onclick="save()">save</button>
+</body>
+<script>
+    var table = document.getElementById("table");
+    for (let i = 0; i < 10; i++) {
+        var row = table.insertRow(i);
+        for (let j = 0; j < 10; j++) {
+            var cell = row.insertCell(j);
+            cell.innerHTML = i + "," + j;
+            cell.id = i + "," + j
+            cell.addEventListener('click', function () {
+                if (this.style.backgroundColor=='black'){
+                    this.style.backgroundColor='white'
+                }else{
+                    this.style.backgroundColor='black'
+                }
+            })
+        }
+    }
+    function save() {
+        text = '[';
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                var cell = document.getElementById(i + ',' + j)
+                if (cell.style.backgroundColor=='black'){
+                    text += ('(' + cell.id + '), ')
+                }
+            }
+        }
+        text += ']';
+        console.log(text);
+        var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, "map.txt");
+        // fs.writeFile('Output.txt', text, (err) => {
+        //     if (err) throw err;
+        // })
+    }
+</script>
+</html>

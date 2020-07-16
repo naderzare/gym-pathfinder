@@ -22,12 +22,14 @@ class PathFinderEnv(gym.Env):
         self.goal_position = None
         self.walls = None
 
-    def _next_observation(self):
+    def _next_observation(self, done):
         obs = np.zeros(self.observation_space.shape)
-        obs[self.agent_position[0], self.agent_position[1]] = 1
-        obs[self.goal_position[0], self.goal_position[1]] = 0.5
-        for w in self.walls:
-            obs[w[0], w[1]] = 0.25
+        if not done:
+            obs[self.agent_position[0], self.agent_position[1]] = 1
+            obs[self.goal_position[0], self.goal_position[1]] = 0.5
+            for w in self.walls:
+                obs[w[0], w[1]] = 0.25
+        obs = obs.reshape((10, 10, 1))
         return obs
 
     def _take_action(self, action):
@@ -67,18 +69,26 @@ class PathFinderEnv(gym.Env):
 
         done = bool(self.goal_position == self.agent_position
                     or self.agent_position[0] < 0
-                    or self.agent_position[0] > self.observation_space.shape[0]
+                    or self.agent_position[0] > self.observation_space.shape[0] - 1
                     or self.agent_position[1] < 0
-                    or self.agent_position[1] > self.observation_space.shape[1]
-                    or self.current_step > 20
+                    or self.agent_position[1] > self.observation_space.shape[1] - 1
                     or self.agent_position in self.walls
+                    or self.current_step > 30
                     )
+        information = {'result': 'normal'}
+        if done:
+            if self.goal_position == self.agent_position:
+                information['result'] = 'goal'
+            elif self.agent_position in self.walls:
+                information['result'] = 'wall'
+            elif self.current_step > 30:
+                information['result'] = 'time'
+            else:
+                information['result'] = 'out'
 
-        obs = None
-        if not done:
-            obs = self._next_observation()
+        obs = self._next_observation(done)
         self.state = obs
-        return obs, reward, done
+        return obs, reward, done, information
 
     def reset(self):
         wall_inserted = 0
@@ -98,7 +108,7 @@ class PathFinderEnv(gym.Env):
                 break
         self.current_step = 0
         self.state = np.zeros(self.observation_space.shape)
-        obs = self._next_observation()
+        obs = self._next_observation(False)
         self.state = obs
         return obs
 
