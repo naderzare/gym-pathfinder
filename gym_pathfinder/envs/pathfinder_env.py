@@ -2,13 +2,14 @@ import gym
 from gym import spaces
 import numpy as np
 import random
+import os
 
 
 class PathFinderEnv(gym.Env):
     """Custom Environment that follows gym interface"""
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, map_path=None):
         super(PathFinderEnv, self).__init__()
         self.sparse_reward = False
         self.count_i = 10
@@ -21,14 +22,35 @@ class PathFinderEnv(gym.Env):
         self.agent_position = None
         self.goal_position = None
         self.walls = None
+        self.wall_value = 0.25
+        self.free_value = 0.0
+        self.goal_value = 0.5
+        self.agent_value = 1.0
+        self.random_walls = 5
+        self.map_path = map_path
+        self.maps = []
+        self.read_maps()
+
+    def read_maps(self):
+        if self.map_path is None:
+            return
+        if os.path.isdir(self.map_path):
+            for f in os.listdir(self.map_path):
+                self.read_map(os.path.join(self.map_path, f))
+        else:
+            self.read_map(self.map_path)
+
+    def read_map(self, path):
+        f = open(path, 'r').readline()
+        self.maps.append(eval(f))
 
     def _next_observation(self, done):
         obs = np.zeros(self.observation_space.shape)
         if not done:
-            obs[self.agent_position[0], self.agent_position[1]] = 1
-            obs[self.goal_position[0], self.goal_position[1]] = 0.5
+            obs[self.agent_position[0], self.agent_position[1]] = self.agent_value
+            obs[self.goal_position[0], self.goal_position[1]] = self.goal_value
             for w in self.walls:
-                obs[w[0], w[1]] = 0.25
+                obs[w[0], w[1]] = self.wall_value
         obs = obs.reshape((10, 10, 1))
         return obs
 
@@ -41,6 +63,43 @@ class PathFinderEnv(gym.Env):
             self.agent_position[1] -= 1
         if action == 3:
             self.agent_position[1] += 1
+
+    def reward_calculator(self, state, next_state):
+        goal_position = np.where(state == self.goal_value)
+        agent_position = np.where(state == self.agent_value)
+        next_agent_position = np.where(next_state == self.agent_value)
+        done = False
+        if self.sparse_reward:
+            if len(next_agent_position[0]) == 0:
+                reward = 1
+                done = True
+            elif goal_position == next_agent_position:
+                reward = 1
+                done = True
+            else:
+                reward = -1
+        else:
+            if len(next_agent_position[0]) == 0:
+                reward = 1
+                done = True
+            elif goal_position == next_agent_position:
+                reward = 1
+                done = True
+            elif next_agent_position[0] < 0 \
+                    or next_agent_position[0] > self.observation_space.shape[0] \
+                    or next_agent_position[1] < 0 or next_agent_position[1] > self.observation_space.shape[1] \
+                    or next_agent_position in self.walls:
+                reward = -1
+                done = True
+            else:
+                c_diff = abs(next_agent_position[0] - goal_position[0]) + abs(
+                    next_agent_position[1] - goal_position[1])
+                p_diff = abs(agent_position[0] - goal_position[0]) + abs(
+                    agent_position[1] - goal_position[1])
+                reward = (p_diff - c_diff) / 20
+                if len(reward) == 0:
+                    print(state.reshape((10, 10)))
+        return reward, done
 
     def step(self, action):
         previous_position = [self.agent_position[0], self.agent_position[1]]
@@ -90,21 +149,48 @@ class PathFinderEnv(gym.Env):
         self.state = obs
         return obs, reward, done, information
 
+    def agent_to_goal_available(self):
+        map = [[0 for _ in range(10)] for _ in range(10)]
+        for w in self.walls:
+            map[w[0]][w[1]] = -1
+        map[self.agent_position[0]][self.agent_position[1]] = 1
+        map[self.goal_position[0]][self.goal_position[1]] = 2
+        queue = [[self.agent_position[0], self.agent_position[1]]]
+        while len(queue) > 0:
+            center = queue[0]
+            neiburs = [[center[0] + 1, center[1]], [center[0] - 1, center[1]], [center[0], center[1] - 1],
+                       [center[0], center[1] + 1]]
+            for n in neiburs:
+                if n[0] >= 10 or n[0] < 0 or n[1] >= 10 or n[1] < 0:
+                    continue
+                if map[n[0]][n[1]] == 0:
+                    queue.append([n[0], n[1]])
+                    map[n[0]][n[1]] = 1
+                if map[n[0]][n[1]] == 2:
+                    return True
+            del queue[0]
+        return False
+
     def reset(self):
         wall_inserted = 0
+        free_cell = [[i, j] for i in range(10) for j in range(10)]
         self.walls = []
-        while wall_inserted < 5:
-            wall = [random.randint(0, self.count_i - 1), random.randint(0, self.count_j - 1)]
-            if wall not in self.walls:
-                self.walls.append(wall)
-                wall_inserted += 1
+        self.current_step = random.choice(self.maps)
+        for w in self.current_step:
+            self.walls.append(w)
+            free_cell.remove(w)
+        random.shuffle(free_cell)
+        while wall_inserted < self.random_walls:
+            wall = free_cell[0]
+            self.walls.append(wall)
+            free_cell.remove(wall)
+            wall_inserted += 1
         while True:
-            self.agent_position = [random.randint(0, self.count_i - 1), random.randint(0, self.count_j - 1)]
-            if self.agent_position not in self.walls:
-                break
-        while True:
-            self.goal_position = [random.randint(0, self.count_i - 1), random.randint(0, self.count_j - 1)]
-            if self.goal_position != self.agent_position and self.goal_position not in self.walls:
+            self.agent_position = free_cell[0]
+            free_cell.remove(self.agent_position)
+            self.goal_position = free_cell[0]
+            free_cell.remove(self.goal_position)
+            if self.agent_to_goal_available():
                 break
         self.current_step = 0
         self.state = np.zeros(self.observation_space.shape)

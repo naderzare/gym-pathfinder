@@ -9,5 +9,5 @@ class Transition:
         self.is_end_val = 0 if next_state is None else 1
 
     def __repr__(self):
-        return str(self.state) + ' with ' + str(self.action) + ' to ' + str(self.next_state) + ' r: ' + str(self.reward) + ' v: ' + str(self.value)
+        return str(self.state.shape) + ' with ' + str(self.action) + ' to ' + str(self.next_state.shape) + ' r: ' + str(self.reward) + ' v: ' + str(self.value)
 

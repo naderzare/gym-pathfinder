@@ -25,7 +25,7 @@ class DeepQ:
         self.train_step_counter = train_step_counter
         self.action_number = 4
         self.transitions: List[Transition] = []
-        self.gama = 0.95
+        self.gama = 0.99
         self.episode_number = 0
         self.plan_number = 0
         self.step_number = 0
@@ -106,34 +106,26 @@ class DeepQ:
         action_rot = [2, 5, 8, 1, 4, 7, 0, 3, 6]
         return action_rot[ac]
 
-    def add_to_buffer(self, state, action, reward, next_state, done):
-        use_her = False
+    def add_to_buffer(self, state, action, reward, next_state, done, train=True):
         if done:
             next_state = None
-        else:
-            use_her = True
-            agent_pos = np.where(next_state == 1.0)
-        # for i in range(4):
         transition = Transition(state, action, reward, next_state)
         self.buffer.add(transition)
-        # if use_her:
-        #     state[state == 0.5] = 0.0
-        #     state[agent_pos] = 0.5
-        #     reward = 1.0
-        #     transition = Transition(state, action, reward, next_state)
-        #     self.buffer.add(transition)
         # state = np.rot90(state)
         # if next_state is not None:
         #     next_state = np.rot90(next_state)
         # action = DeepQ.rotate_action(action)
+        if train:
+            self.train()
+            if next_state is None:  # End step in episode
+                self.episode_number += 1
 
+    def train(self):
         self.step_number += 1
         if self.step_number % self.train_interval_step == 0:
             self.update_from_buffer()
         if self.step_number % self.target_update_interval_step == 0:
             self.target_network.set_weights(self.model.get_weights())
-        if next_state is None:  # End step in episode
-            self.episode_number += 1
 
     def update_from_buffer(self):
         transits: List[Transition] = self.buffer.get_rand(self.train_step_counter)

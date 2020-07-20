@@ -1,10 +1,9 @@
 import gym
 
-env = gym.make('gym_pathfinder:PathFinder-v0')
+env = gym.make('gym_pathfinder:PathFinder-v0', map_path='/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/')
 
 obs = env.reset()
 env.render()
-print(obs)
 done = False
 while not done:
     action = int(input('enter (0 Down, 1 Left, 2 Up, 3 Right:'))
@@ -12,6 +11,5 @@ while not done:
     action = actions[action]
     obs, reward, done, info = env.step(action)
     env.render()
-    print(reward)
 
 env.close()

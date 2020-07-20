@@ -17,34 +17,52 @@
 </style>
 
 <body>
+    <label>i counter:</label>
+    <input id="i_counter" style="width: 20px" value="10">
+    <label>j counter:</label>
+    <input id="j_counter" style="width: 20px" value="10">
+
+    <button onclick="create()">create</button>
     <table id="table">
     </table>
     <button onclick="save()">save</button>
 </body>
 <script>
-    var table = document.getElementById("table");
-    for (let i = 0; i < 10; i++) {
-        var row = table.insertRow(i);
-        for (let j = 0; j < 10; j++) {
-            var cell = row.insertCell(j);
-            cell.innerHTML = i + "," + j;
-            cell.id = i + "," + j
-            cell.addEventListener('click', function () {
-                if (this.style.backgroundColor=='black'){
-                    this.style.backgroundColor='white'
-                }else{
-                    this.style.backgroundColor='black'
-                }
-            })
+    var i_counter = 10, j_counter = 10;
+
+    function create() {
+        i_counter = document.getElementById('i_counter').value;
+        j_counter = document.getElementById('j_counter').value;
+        var table = document.getElementById("table");
+        var rows = table.getElementsByTagName('tr');
+        for (let i = rows.length - 1; i >= 0; i--) {
+            table.deleteRow(i);
+        }
+        var table = document.getElementById("table");
+        for (let i = 0; i < i_counter; i++) {
+            var row = table.insertRow(i);
+            for (let j = 0; j < j_counter; j++) {
+                var cell = row.insertCell(j);
+                cell.innerHTML = i + "," + j;
+                cell.id = i + "," + j
+                cell.addEventListener('click', function () {
+                    if (this.style.backgroundColor=='black'){
+                        this.style.backgroundColor='white'
+                    }else{
+                        this.style.backgroundColor='black'
+                    }
+                })
+            }
         }
     }
+
     function save() {
         text = '[';
-        for (let i = 0; i < 10; i++) {
-            for (let j = 0; j < 10; j++) {
-                var cell = document.getElementById(i + ',' + j)
+        for (let i = 0; i < i_counter; i++) {
+            for (let j = 0; j < j_counter; j++) {
+                var cell = document.getElementById(i + ',' + j);
                 if (cell.style.backgroundColor=='black'){
-                    text += ('(' + cell.id + '), ')
+                    text += ('[' + cell.id + '], ')
                 }
             }
         }
