@@ -18,6 +18,7 @@ env = gym.make('gym_pathfinder:PathFinder-v0', map_path='/home/nader/workspace/r
 env.sparse_reward = False
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
+rl.rotating = True
 just_test = False
 use_her = False
 run_name = 'human_maps_verti99'
