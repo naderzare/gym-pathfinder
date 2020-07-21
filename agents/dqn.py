@@ -31,6 +31,7 @@ class DeepQ:
         self.step_number = 0
         self.use_double = False
         self.loss_values = []
+        self.rotating = False
         pass
 
     def create_model_cnn_dense(self):
@@ -104,18 +105,23 @@ class DeepQ:
 
     @staticmethod
     def rotate_action(ac):
-        action_rot = [2, 5, 8, 1, 4, 7, 0, 3, 6]
+        action_rot = [3, 2, 1, 0]
         return action_rot[ac]
 
     def add_to_buffer(self, state, action, reward, next_state, done, train=True):
         if done:
             next_state = None
+
         transition = Transition(state, action, reward, next_state)
         self.buffer.add(transition)
-        # state = np.rot90(state)
-        # if next_state is not None:
-        #     next_state = np.rot90(next_state)
-        # action = DeepQ.rotate_action(action)
+        if self.rotating:
+            for i in range(3):
+                state = np.rot90(state)
+                if next_state is not None:
+                    next_state = np.rot90(next_state)
+                action = DeepQ.rotate_action(action)
+                transition = Transition(state, action, reward, next_state)
+                self.buffer.add(transition)
         if train:
             self.train()
             if next_state is None:  # End step in episode
