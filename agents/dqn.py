@@ -105,7 +105,7 @@ class DeepQ:
 
     @staticmethod
     def rotate_action(ac):
-        action_rot = [3, 2, 1, 0]
+        action_rot = [3, 0, 1, 2]
         return action_rot[ac]
 
     def add_to_buffer(self, state, action, reward, next_state, done, train=True):
