@@ -37,13 +37,13 @@ class DeepQ:
     def create_model_cnn_dense(self):
         self.model_type = 'image'
         in1 = layers.Input((10, 10, 1,))
-        m1 = layers.Conv2D(8, (3, 3), strides=(1, 1), activation='relu')(in1)
-        m1 = layers.Conv2D(8, (3, 3), strides=(1, 1), activation='relu')(m1)
-        m1 = layers.Conv2D(8, (3, 3), strides=(1, 1), activation='relu')(m1)
+        m1 = layers.Conv2D(16, (2, 2), strides=(1, 1), activation='relu')(in1)
+        m1 = layers.Conv2D(16, (2, 2), strides=(1, 1), activation='relu')(m1)
+        m1 = layers.Conv2D(16, (2, 2), strides=(1, 1), activation='relu')(m1)
         m1 = layers.Flatten()(m1)
-        out = layers.Dense(256, activation='relu')(m1)
-        out = layers.Dense(128, activation='relu')(out)
-        out = layers.Dense(32, activation='relu')(out)
+        out = layers.Dense(512, activation='relu')(m1)
+        out = layers.Dense(256, activation='relu')(out)
+        out = layers.Dense(64, activation='relu')(out)
         out = layers.Dense(self.action_number)(out)
 
         model = keras.Model(in1, out)

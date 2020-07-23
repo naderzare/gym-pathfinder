@@ -8,21 +8,25 @@ import numpy as np
 import random
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
+import sys
 
-
-config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.49
-set_session(tf.Session(config=config))
 
 env = gym.make('gym_pathfinder:PathFinder-v0', map_path='/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/')
 env.sparse_reward = False
+env.time_neg_reward = False
+env.move_neg_reward = False
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
-rl.rotating = True
+rl.rotating = False
 just_test = False
+test_rot = True
 use_her = False
-run_name = 'human_maps_verti99'
+her_type = 'future'  # 'episode
+her_number = 4
+run_name = 'human_maps_verti99' + (sys.argv[1] if len(sys.argv) > 1 else '')
 
+print('$'*100)
+print(run_name)
 if not os.path.exists(run_name):
     os.makedirs(run_name)
 if just_test:
@@ -34,10 +38,10 @@ train_epoch = 200
 test_episode = 100
 
 
-def run_episode(is_test, ep, e):
+def run_episode(is_test, ep, e, test_rot):
     R = 0
     success = 0
-    obs = env.reset()
+    obs = env.reset_with_rot(test_rot)
     obs = obs.reshape((10, 10, 1))
     if just_test:
         env.render()
@@ -65,14 +69,14 @@ def run_episode(is_test, ep, e):
     return R, success
 
 
-def run_episode_her(is_test, ep, e):
+def run_episode_her(is_test, ep, e, test_rot):
     R = 0
     success = 0
     observations = []
     next_observations = []
     actions = []
     dones = []
-    obs = env.reset()
+    obs = env.reset_with_rot(test_rot)
     obs = obs.reshape((10, 10, 1))
     if just_test:
         env.render()
@@ -103,11 +107,11 @@ def run_episode_her(is_test, ep, e):
             if dones[t]:
                 continue
             goals = []
-            for s in range(t+1, len(observations)):
+            for s in range(t+1 if her_type == 'future' else 0, len(observations)):
                 goal = np.where(observations[s] == env.agent_value)
                 goals.append(goal)
             random.shuffle(goals)
-            goals = goals[:]
+            goals = goals[:her_number]
             for g in goals:
                 obs = np.copy(observations[t])
                 next_obs = np.copy(next_observations[t])
@@ -133,20 +137,20 @@ def run_episode_her(is_test, ep, e):
     return R, success
 
 
-def run_bunch(is_test, count_of_episodes, bunch_number):
+def run_bunch(is_test, count_of_episodes, bunch_number, test_rot):
     bunch_reward = 0
     bunch_success = 0
     for e in range(count_of_episodes):
         if use_her:
-            reward, success = run_episode_her(is_test, bunch_number, e)
+            reward, success = run_episode_her(is_test, bunch_number, e, test_rot)
         else:
-            reward, success = run_episode(is_test, bunch_number, e)
+            reward, success = run_episode(is_test, bunch_number, e, test_rot)
         bunch_reward += reward
         bunch_success += success
     return bunch_reward, bunch_success
 
 
-def process_results(rewards, successes):
+def process_results(rewards, successes, rot_rewards, rot_successes):
     plt.plot(successes)
     plt.show()
     file = open(os.path.join(run_name, 'test_rewards'), 'w')
@@ -157,19 +161,39 @@ def process_results(rewards, successes):
     for x in successes:
         file.write(str(x) + '\n')
     file.close()
+    file = open(os.path.join(run_name, 'rot_test_rewards'), 'w')
+    for x in rot_rewards:
+        file.write(str(x) + '\n')
+    file.close()
+    file = open(os.path.join(run_name, 'rot_test_successes'), 'w')
+    for x in rot_successes:
+        file.write(str(x) + '\n')
+    file.close()
 
 
 test_rewards = []
 test_success = []
-bunch_reward, bunch_success = run_bunch(True, test_episode, 0)
-rl.model.save_weights(os.path.join(run_name, f'ep{0}.h5'))
+rot_test_rewards = []
+rot_test_success = []
+bunch_reward, bunch_success = run_bunch(True, test_episode, 0, False)
 test_rewards.append(bunch_reward / test_episode)
+test_success.append(bunch_success)
+if test_rot:
+    bunch_reward, bunch_success = run_bunch(True, test_episode, 0, True)
+    rot_test_rewards.append(bunch_reward / test_episode)
+    rot_test_success.append(bunch_success)
+rl.model.save_weights(os.path.join(run_name, f'ep{0}.h5'))
+
 for bunch_number in range(1, train_epoch + 1):
     if not just_test:
-        run_bunch(False, train_episode, bunch_number)
-    bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number)
-    rl.model.save_weights(os.path.join(run_name, f'ep{bunch_number}.h5'))
+        run_bunch(False, train_episode, bunch_number, False)
+    bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, False)
     test_rewards.append(bunch_reward / test_episode)
     test_success.append(bunch_success)
-    if bunch_number % 2 == 0:
-        process_results(test_rewards, test_success)
+    if test_rot:
+        bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, True)
+        rot_test_rewards.append(bunch_reward / test_episode)
+        rot_test_success.append(bunch_success)
+    rl.model.save_weights(os.path.join(run_name, f'ep{bunch_number}.h5'))
+    if bunch_number % 10 == 0:
+        process_results(test_rewards, test_success, rot_test_rewards, rot_test_success)
