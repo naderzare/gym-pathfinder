@@ -60,7 +60,7 @@ if just_test:
 
 train_episode = 1000
 train_epoch = 200
-test_episode = 5
+test_episode = 100
 
 
 def run_episode(is_test, ep, e, test_rot):

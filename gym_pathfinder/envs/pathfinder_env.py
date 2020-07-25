@@ -206,13 +206,15 @@ class PathFinderEnv(gym.Env):
             self.walls.append(wall)
             free_cell.remove(wall)
             wall_inserted += 1
+
         while True:
+            random.shuffle(free_cell)
             self.agent_position = free_cell[0]
-            free_cell.remove(self.agent_position)
-            self.goal_position = free_cell[0]
-            free_cell.remove(self.goal_position)
+            self.goal_position = free_cell[1]
             if self.agent_to_goal_available():
                 break
+            free_cell.remove(self.agent_position)
+            free_cell.remove(self.goal_position)
         self.current_step = 0
         self.state = np.zeros(self.observation_space.shape)
         obs = self._next_observation(False)
