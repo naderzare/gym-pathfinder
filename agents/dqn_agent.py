@@ -34,7 +34,7 @@ parser.add_argument('-uh', '--use_her', help='using HER', type=str2bool, default
 parser.add_argument('-ht', '--her_type', help='HER Type', type=str, default='future')
 parser.add_argument('-hn', '--her_number', help='HER Number', type=int, default=4)
 parser.add_argument('-n', '--name', help='Run Name', type=str, default='test_'+str(time.time()))
-parser.add_argument('-map', '--map', help='Map Path', type=str, default='/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/')
+parser.add_argument('-m', '--map', help='Map Path', type=str, default='/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/')
 args = parser.parse_args()
 
 
@@ -44,13 +44,13 @@ env.time_neg_reward = args.tnr
 env.move_neg_reward = args.mnr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
-rl.rotating = args.r
-just_test = args.t
-test_rot = args.tr
-use_her = args.uh
-her_type = args.ht
-her_number = args.hn
-run_name = args.n
+rl.rotating = args.rl_rotating
+just_test = args.test
+test_rot = args.test_rotating
+use_her = args.use_her
+her_type = args.her_type
+her_number = args.her_number
+run_name = args.name
 
 if not os.path.exists(run_name):
     os.makedirs(run_name)
