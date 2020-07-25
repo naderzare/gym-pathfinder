@@ -17,6 +17,7 @@ class PathFinderEnv(gym.Env):
         self.action_space = spaces.Box(low=np.array([0]), high=np.array([3]), dtype=np.float16)
         self.observation_space = spaces.Box(low=0, high=1, shape=(self.count_i, self.count_j), dtype=np.float16)
         self.current_step = 0
+        self.current_map = None
         self.viewer = None
         self.state = None
         self.agent_position = None
@@ -47,7 +48,7 @@ class PathFinderEnv(gym.Env):
         f = open(path, 'r').readline()
         vmap = eval(f)
         self.maps.append(vmap)
-        self.rot_maps.append([w[1], w[0]] for w in vmap)
+        self.rot_maps.append([[w[1], w[0]] for w in vmap])
 
     def _next_observation(self, done):
         obs = np.zeros(self.observation_space.shape)
@@ -193,10 +194,10 @@ class PathFinderEnv(gym.Env):
         free_cell = [[i, j] for i in range(10) for j in range(10)]
         self.walls = []
         if test_rot:
-            self.current_step = random.choice(self.rot_maps)
+            self.current_map = random.choice(self.rot_maps)
         else:
-            self.current_step = random.choice(self.maps)
-        for w in self.current_step:
+            self.current_map = random.choice(self.maps)
+        for w in self.current_map:
             self.walls.append(w)
             free_cell.remove(w)
         random.shuffle(free_cell)

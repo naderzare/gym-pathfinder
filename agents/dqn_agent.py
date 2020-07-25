@@ -9,33 +9,58 @@ import random
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 import sys
+import argparse
 
 
-env = gym.make('gym_pathfinder:PathFinder-v0', map_path='/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/')
-env.sparse_reward = False
-env.time_neg_reward = False
-env.move_neg_reward = False
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--sparse', help='using sparse reward', type=str2bool, default=False)
+parser.add_argument('--tnr', help='time negative reward', type=str2bool, default=False)
+parser.add_argument('--mnr', help='move negative reward', type=str2bool, default=False)
+parser.add_argument('-r', '--rl_rotating', help='using rotating in training', type=str2bool, default=False)
+parser.add_argument('-t', '--test', help='just test', type=str2bool, default=False)
+parser.add_argument('-tr', '--test_rotating', help='test_rotating', type=str2bool, default=True)
+parser.add_argument('-uh', '--use_her', help='using HER', type=str2bool)
+parser.add_argument('-ht', '--her_type', help='HER Type', type=str, default='future')
+parser.add_argument('-hn', '--her_number', help='HER Number', type=int, default=4)
+parser.add_argument('-n', '--name', help='Run Name', type=str, default='test_'+str(time.time()))
+parser.add_argument('-map', '--map', help='Map Path', type=str, default='/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/')
+args = parser.parse_args()
+
+
+env = gym.make('gym_pathfinder:PathFinder-v0', map_path=args.map)
+env.sparse_reward = args.sparse
+env.time_neg_reward = args.tnr
+env.move_neg_reward = args.mnr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
-rl.rotating = False
-just_test = False
-test_rot = True
-use_her = False
-her_type = 'future'  # 'episode
-her_number = 4
-run_name = 'human_maps_verti99' + (sys.argv[1] if len(sys.argv) > 1 else '')
+rl.rotating = args.r
+just_test = args.t
+test_rot = args.tr
+use_her = args.uh
+her_type = args.ht
+her_number = args.hn
+run_name = args.n
 
-print('$'*100)
-print(run_name)
 if not os.path.exists(run_name):
     os.makedirs(run_name)
 if just_test:
-    rl.read_weight(os.path.join(run_name, 'ep180.h5'))
+    rl.read_weight(os.path.join('/home/nader/workspace/rl/gym-pathfinder/agents/results/jul24/testF', 'ep175.h5'))
 
 
 train_episode = 1000
 train_epoch = 200
-test_episode = 100
+test_episode = 5
 
 
 def run_episode(is_test, ep, e, test_rot):
@@ -47,7 +72,7 @@ def run_episode(is_test, ep, e, test_rot):
         env.render()
     done = False
     while not done:
-        action = rl.get_random_action(obs, 0.1)
+        action = rl.get_random_action(obs, 0.0 if is_test else 0.1)
         prev_obs = copy.copy(obs)
         obs, reward, done, info = env.step(action)
         R += reward
@@ -56,12 +81,14 @@ def run_episode(is_test, ep, e, test_rot):
         obs = obs.reshape((10, 10, 1))
         if not is_test:
             if info['result'] == 'time':
-                rl.add_to_buffer(prev_obs, action, reward, obs, False)
+                rl.add_to_buffer(prev_obs, action, reward, obs, False, False)
             else:
-                rl.add_to_buffer(prev_obs, action, reward, obs, done)
+                rl.add_to_buffer(prev_obs, action, reward, obs, done, False)
         if just_test:
             env.render()
             time.sleep(0.2)
+    for t in range(20):
+        rl.train()
     if is_test:
         print(f'Epoch:{ep} Test Episode:{e} R:{R}')
     else:
@@ -82,7 +109,7 @@ def run_episode_her(is_test, ep, e, test_rot):
         env.render()
     done = False
     while not done:
-        action = rl.get_random_action(obs, 0.1)
+        action = rl.get_random_action(obs, 0.0 if is_test else 0.1)
         prev_obs = copy.copy(obs)
         obs, reward, done, info = env.step(action)
         R += reward
@@ -128,7 +155,7 @@ def run_episode_her(is_test, ep, e, test_rot):
                 if type(reward) == np.ndarray:
                     reward = float(reward[0])
                 rl.add_to_buffer(obs, action, reward, next_obs, done, False)
-        for t in range(len(observations)):
+        for t in range(20):
             rl.train()
     if is_test:
         print(f'Epoch:{ep} Test Episode:{e} R:{R}')
@@ -167,6 +194,10 @@ def process_results(rewards, successes, rot_rewards, rot_successes):
     file.close()
     file = open(os.path.join(run_name, 'rot_test_successes'), 'w')
     for x in rot_successes:
+        file.write(str(x) + '\n')
+    file.close()
+    file = open(os.path.join(run_name, 'loss'), 'w')
+    for x in rl.loss_values:
         file.write(str(x) + '\n')
     file.close()
 

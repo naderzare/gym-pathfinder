@@ -196,9 +196,9 @@ class DeepQ:
 
         history = self.model.fit(states_view, q,  epochs=1, batch_size=32, verbose=0)
         history_dict = history.history
-
         loss_values = history_dict['loss']
         self.loss_values.append(loss_values[0])
+
 
 if __name__ == '__main__':
     rl = DeepQ()
