@@ -47,6 +47,7 @@ rl.create_model_cnn_dense()
 rl.rotating = args.rl_rotating
 just_test = args.test
 test_rot = args.test_rotating
+test_dia = True
 use_her = args.use_her
 her_type = args.her_type
 her_number = args.her_number
@@ -69,14 +70,14 @@ train_epoch = 200
 test_episode = 100
 
 
-def run_episode(is_test, ep, e, test_rot):
+def run_episode(is_test, ep, e, test_rot, test_dia):
     R = 0
     success = 0
     observations = []
     next_observations = []
     actions = []
     dones = []
-    obs = env.reset_with_rot(test_rot)
+    obs = env.reset_with_rot(test_rot, test_dia)
     obs = obs.reshape((10, 10, 1))
     if just_test:
         env.render()
@@ -138,17 +139,17 @@ def run_episode(is_test, ep, e, test_rot):
     return R, success
 
 
-def run_bunch(is_test, count_of_episodes, bunch_number, test_rot):
+def run_bunch(is_test, count_of_episodes, bunch_number, test_rot, test_dia):
     bunch_reward = 0
     bunch_success = 0
     for e in range(count_of_episodes):
-        reward, success = run_episode(is_test, bunch_number, e, test_rot)
+        reward, success = run_episode(is_test, bunch_number, e, test_rot, test_dia)
         bunch_reward += reward
         bunch_success += success
     return bunch_reward, bunch_success
 
 
-def process_results(rewards, successes, rot_rewards, rot_successes):
+def process_results(rewards, successes, rot_rewards, rot_successes, dia_rewards, dia_successes):
     plt.plot(successes)
     plt.show()
     file = open(os.path.join(run_name, 'test_rewards.txt'), 'w')
@@ -167,6 +168,14 @@ def process_results(rewards, successes, rot_rewards, rot_successes):
     for x in rot_successes:
         file.write(str(x) + '\n')
     file.close()
+    file = open(os.path.join(run_name, 'dia_test_rewards.txt'), 'w')
+    for x in dia_rewards:
+        file.write(str(x) + '\n')
+    file.close()
+    file = open(os.path.join(run_name, 'dia_test_successes.txt'), 'w')
+    for x in dia_successes:
+        file.write(str(x) + '\n')
+    file.close()
     file = open(os.path.join(run_name, 'loss.txt'), 'w')
     for x in rl.loss_values:
         file.write(str(x) + '\n')
@@ -178,28 +187,39 @@ def main():
     test_success = []
     rot_test_rewards = []
     rot_test_success = []
-    bunch_reward, bunch_success = run_bunch(True, test_episode, 0, False)
+    dia_test_rewards = []
+    dia_test_success = []
+    bunch_reward, bunch_success = run_bunch(True, test_episode, 0, False, False)
     test_rewards.append(bunch_reward / test_episode)
     test_success.append(bunch_success)
     if test_rot:
-        bunch_reward, bunch_success = run_bunch(True, test_episode, 0, True)
+        bunch_reward, bunch_success = run_bunch(True, test_episode, 0, True, False)
         rot_test_rewards.append(bunch_reward / test_episode)
         rot_test_success.append(bunch_success)
+    if test_dia:
+        bunch_reward, bunch_success = run_bunch(True, test_episode, 0, False, True)
+        dia_test_rewards.append(bunch_reward / test_episode)
+        dia_test_success.append(bunch_success)
     rl.model.save_weights(os.path.join(run_name, f'ep{0}.h5'))
 
     for bunch_number in range(1, train_epoch + 1):
         if not just_test:
             run_bunch(False, train_episode, bunch_number, False)
-        bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, False)
+        bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, False, False)
         test_rewards.append(bunch_reward / test_episode)
         test_success.append(bunch_success)
         if test_rot:
-            bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, True)
+            bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, True, False)
             rot_test_rewards.append(bunch_reward / test_episode)
             rot_test_success.append(bunch_success)
+        if test_rot:
+            bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, False, True)
+            dia_test_rewards.append(bunch_reward / test_episode)
+            dia_test_success.append(bunch_success)
         rl.model.save_weights(os.path.join(run_name, f'ep{bunch_number}.h5'))
         if bunch_number % 10 == 0:
-            process_results(test_rewards, test_success, rot_test_rewards, rot_test_success)
+            process_results(test_rewards, test_success, rot_test_rewards, rot_test_success, dia_test_rewards,
+                            dia_test_success)
 
 
 if __name__ == '__main__':

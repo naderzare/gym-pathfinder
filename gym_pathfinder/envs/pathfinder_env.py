@@ -31,6 +31,8 @@ class PathFinderEnv(gym.Env):
         self.map_path = map_path
         self.maps = []
         self.rot_maps = []
+        self.diagonal_maps = []
+        self.read_dia_map()
         self.read_maps()
         self.time_neg_reward = False
         self.move_neg_reward = False
@@ -43,6 +45,12 @@ class PathFinderEnv(gym.Env):
                 self.read_map(os.path.join(self.map_path, f))
         else:
             self.read_map(self.map_path)
+
+    def read_dia_map(self):
+        for f in os.listdir('/home/nader/workspace/rl/gym-pathfinder/agents/maps/diagonal_map'):
+            file = open(f, 'r').readline()
+            vmap = eval(file)
+            self.diagonal_maps.append(vmap)
 
     def read_map(self, path):
         f = open(path, 'r').readline()
@@ -187,14 +195,16 @@ class PathFinderEnv(gym.Env):
         return False
 
     def reset(self):
-        self.reset_with_rot(False)
+        self.reset_with_rot(False, False)
 
-    def reset_with_rot(self, test_rot):
+    def reset_with_rot(self, test_rot, test_dia):
         wall_inserted = 0
         free_cell = [[i, j] for i in range(10) for j in range(10)]
         self.walls = []
         if test_rot:
             self.current_map = random.choice(self.rot_maps)
+        elif test_dia:
+            self.current_map = random.choice(self.diagonal_maps)
         else:
             self.current_map = random.choice(self.maps)
         for w in self.current_map:
