@@ -9,7 +9,7 @@ class PathFinderEnv(gym.Env):
     """Custom Environment that follows gym interface"""
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, map_path=None):
+    def __init__(self):
         super(PathFinderEnv, self).__init__()
         self.sparse_reward = False
         self.count_i = 10
@@ -28,35 +28,26 @@ class PathFinderEnv(gym.Env):
         self.goal_value = 0.5
         self.agent_value = 1.0
         self.random_walls = 5
-        self.map_path = map_path
-        self.maps = []
+        self.map_path = {}
+        self.maps = {}
         self.rot_maps = []
         self.diagonal_maps = []
-        self.read_dia_map()
-        self.read_maps()
+        self.use_dia_map = False
         self.time_neg_reward = False
         self.move_neg_reward = False
 
-    def read_maps(self):
-        if self.map_path is None:
-            return
-        if os.path.isdir(self.map_path):
-            for f in os.listdir(self.map_path):
-                self.read_map(os.path.join(self.map_path, f))
-        else:
-            self.read_map(self.map_path)
-
-    def read_dia_map(self):
-        for f in os.listdir('/home/nader/workspace/rl/gym-pathfinder/agents/maps/diagonal_map'):
-            file = open(f, 'r').readline()
-            vmap = eval(file)
-            self.diagonal_maps.append(vmap)
-
-    def read_map(self, path):
-        f = open(path, 'r').readline()
-        vmap = eval(f)
-        self.maps.append(vmap)
-        self.rot_maps.append([[w[1], w[0]] for w in vmap])
+    def add_map_path(self, name, path, rot_name=None):
+        self.map_path[name] = path
+        self.maps[name] = []
+        if rot_name is not None:
+            self.maps[rot_name] = []
+        for map_file in os.listdir(path):
+            map_path = os.path.join(path, map_file)
+            f = open(map_path, 'r').readline()
+            vmap = eval(f)
+            self.maps[name].append(vmap)
+            if rot_name is not None:
+                self.maps[rot_name].append([[w[1], w[0]] for w in vmap])
 
     def _next_observation(self, done):
         obs = np.zeros(self.observation_space.shape)
@@ -194,19 +185,13 @@ class PathFinderEnv(gym.Env):
             del queue[0]
         return False
 
-    def reset(self):
-        self.reset_with_rot(False, False)
-
-    def reset_with_rot(self, test_rot, test_dia):
+    def reset(self, map_name=None):
         wall_inserted = 0
         free_cell = [[i, j] for i in range(10) for j in range(10)]
         self.walls = []
-        if test_rot:
-            self.current_map = random.choice(self.rot_maps)
-        elif test_dia:
-            self.current_map = random.choice(self.diagonal_maps)
-        else:
-            self.current_map = random.choice(self.maps)
+        self.current_map = []
+        if map_name is not None:
+            self.current_map = random.choice(self.maps[map_name])
         for w in self.current_map:
             self.walls.append(w)
             free_cell.remove(w)

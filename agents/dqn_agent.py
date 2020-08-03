@@ -6,9 +6,6 @@ import time
 import os
 import numpy as np
 import random
-import tensorflow as tf
-from keras.backend.tensorflow_backend import set_session
-import sys
 import argparse
 
 
@@ -34,11 +31,13 @@ parser.add_argument('-uh', '--use_her', help='using HER', type=str2bool, default
 parser.add_argument('-ht', '--her_type', help='HER Type', type=str, default='future')
 parser.add_argument('-hn', '--her_number', help='HER Number', type=int, default=4)
 parser.add_argument('-n', '--name', help='Run Name', type=str, default='test_'+str(time.time()))
-parser.add_argument('-m', '--map', help='Map Path', type=str, default='/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/')
 args = parser.parse_args()
 
 
-env = gym.make('gym_pathfinder:PathFinder-v0', map_path=args.map)
+env = gym.make('gym_pathfinder:PathFinder-v0')
+env.add_map_path('horizontal', '/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/', 'vertical')
+env.add_map_path('diagonal', '/home/nader/workspace/rl/gym-pathfinder/agents/maps/diagonal_map/')
+
 env.sparse_reward = args.sparse
 env.time_neg_reward = args.tnr
 env.move_neg_reward = args.mnr
@@ -70,14 +69,14 @@ train_epoch = 200
 test_episode = 100
 
 
-def run_episode(is_test, ep, e, test_rot, test_dia):
+def run_episode(is_test, ep, e, map_name):
     R = 0
     success = 0
     observations = []
     next_observations = []
     actions = []
     dones = []
-    obs = env.reset_with_rot(test_rot, test_dia)
+    obs = env.reset(map_name)
     obs = obs.reshape((10, 10, 1))
     if just_test:
         env.render()
@@ -139,43 +138,29 @@ def run_episode(is_test, ep, e, test_rot, test_dia):
     return R, success
 
 
-def run_bunch(is_test, count_of_episodes, bunch_number, test_rot, test_dia):
+def run_bunch(is_test, count_of_episodes, bunch_number, map_name):
     bunch_reward = 0
     bunch_success = 0
     for e in range(count_of_episodes):
-        reward, success = run_episode(is_test, bunch_number, e, test_rot, test_dia)
+        reward, success = run_episode(is_test, bunch_number, e, map_name)
         bunch_reward += reward
         bunch_success += success
     return bunch_reward, bunch_success
 
 
-def process_results(rewards, successes, rot_rewards, rot_successes, dia_rewards, dia_successes):
-    plt.plot(successes)
+def process_results(rewards, successes):
+    keys = successes.keys()
+    plt.plot(keys[0])
     plt.show()
-    file = open(os.path.join(run_name, 'test_rewards.txt'), 'w')
-    for x in rewards:
-        file.write(str(x) + '\n')
-    file.close()
-    file = open(os.path.join(run_name, 'test_successes.txt'), 'w')
-    for x in successes:
-        file.write(str(x) + '\n')
-    file.close()
-    file = open(os.path.join(run_name, 'rot_test_rewards.txt'), 'w')
-    for x in rot_rewards:
-        file.write(str(x) + '\n')
-    file.close()
-    file = open(os.path.join(run_name, 'rot_test_successes.txt'), 'w')
-    for x in rot_successes:
-        file.write(str(x) + '\n')
-    file.close()
-    file = open(os.path.join(run_name, 'dia_test_rewards.txt'), 'w')
-    for x in dia_rewards:
-        file.write(str(x) + '\n')
-    file.close()
-    file = open(os.path.join(run_name, 'dia_test_successes.txt'), 'w')
-    for x in dia_successes:
-        file.write(str(x) + '\n')
-    file.close()
+    for k in keys:
+        file = open(os.path.join(run_name, k + '_rewards.txt'), 'w')
+        for x in rewards:
+            file.write(str(x) + '\n')
+        file.close()
+        file = open(os.path.join(run_name, k + '_successes.txt'), 'w')
+        for x in successes:
+            file.write(str(x) + '\n')
+        file.close()
     file = open(os.path.join(run_name, 'loss.txt'), 'w')
     for x in rl.loss_values:
         file.write(str(x) + '\n')
@@ -183,43 +168,27 @@ def process_results(rewards, successes, rot_rewards, rot_successes, dia_rewards,
 
 
 def main():
-    test_rewards = []
-    test_success = []
-    rot_test_rewards = []
-    rot_test_success = []
-    dia_test_rewards = []
-    dia_test_success = []
-    bunch_reward, bunch_success = run_bunch(True, test_episode, 0, False, False)
-    test_rewards.append(bunch_reward / test_episode)
-    test_success.append(bunch_success)
-    if test_rot:
-        bunch_reward, bunch_success = run_bunch(True, test_episode, 0, True, False)
-        rot_test_rewards.append(bunch_reward / test_episode)
-        rot_test_success.append(bunch_success)
-    if test_dia:
-        bunch_reward, bunch_success = run_bunch(True, test_episode, 0, False, True)
-        dia_test_rewards.append(bunch_reward / test_episode)
-        dia_test_success.append(bunch_success)
+    train_maps = ['horizontal']
+    test_maps = ['horizontal', 'vertical', 'diagonal']
+    test_rewards = {x: [] for x in test_maps}
+    test_success = {x: [] for x in test_maps}
+    for test_map in test_maps:
+        bunch_reward, bunch_success = run_bunch(True, test_episode, 0, test_map)
+        test_rewards[test_map].append(bunch_reward / test_episode)
+        test_success[test_map].append(bunch_success)
     rl.model.save_weights(os.path.join(run_name, f'ep{0}.h5'))
 
     for bunch_number in range(1, train_epoch + 1):
         if not just_test:
-            run_bunch(False, train_episode, bunch_number, False)
-        bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, False, False)
-        test_rewards.append(bunch_reward / test_episode)
-        test_success.append(bunch_success)
-        if test_rot:
-            bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, True, False)
-            rot_test_rewards.append(bunch_reward / test_episode)
-            rot_test_success.append(bunch_success)
-        if test_rot:
-            bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, False, True)
-            dia_test_rewards.append(bunch_reward / test_episode)
-            dia_test_success.append(bunch_success)
+            for train_map in train_maps:
+                run_bunch(False, train_episode, bunch_number, train_map)
+        for test_map in test_maps:
+            bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, test_map)
+            test_rewards[test_map].append(bunch_reward / test_episode)
+            test_success[test_map].append(bunch_success)
         rl.model.save_weights(os.path.join(run_name, f'ep{bunch_number}.h5'))
         if bunch_number % 10 == 0:
-            process_results(test_rewards, test_success, rot_test_rewards, rot_test_success, dia_test_rewards,
-                            dia_test_success)
+            process_results(test_rewards, test_success)
 
 
 if __name__ == '__main__':
