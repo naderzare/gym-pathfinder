@@ -33,9 +33,8 @@ parser.add_argument('-ht', '--her_type', help='HER Type', type=str, default='fut
 parser.add_argument('-hn', '--her_number', help='HER Number', type=int, default=4)
 parser.add_argument('-n', '--name', help='Run Name', type=str, default='test_'+str(time.time()))
 args = parser.parse_args()
-
-
-env = gym.make('gym_pathfinder:PathFinder-v0')
+import gym_pathfinder
+env = gym.make('gym_pathfinder:pathfinder-v0')
 env.add_map_path('horizontal', '/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/', 'vertical')
 env.add_map_path('diagonal', '/home/nader/workspace/rl/gym-pathfinder/agents/maps/diagonal_map/')
 
