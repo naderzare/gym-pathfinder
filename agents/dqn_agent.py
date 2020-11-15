@@ -66,9 +66,9 @@ f = open(os.path.join(run_name, 'config.txt'), 'w')
 f.write(str(args))
 f.close()
 
-train_episode = 10
+train_episode = 1000
 train_epoch = 200
-test_episode = 10
+test_episode = 100
 
 
 def run_episode(is_test, ep, e, map_name):
@@ -189,7 +189,7 @@ def main():
             test_rewards[test_map].append(bunch_reward / test_episode)
             test_success[test_map].append(bunch_success)
         rl.model.save_weights(os.path.join(run_name, f'ep{bunch_number}.h5'))
-        if bunch_number % 1 == 0:
+        if bunch_number % 10 == 0:
             process_results(test_rewards, test_success)
 
 
