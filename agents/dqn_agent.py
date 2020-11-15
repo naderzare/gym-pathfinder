@@ -27,7 +27,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--sparse', help='using sparse reward', type=str2bool, default=False)
 parser.add_argument('--tnr', help='time negative reward', type=str2bool, default=False)
 parser.add_argument('--mnr', help='move negative reward', type=str2bool, default=False)
-parser.add_argument('-r', '--rl_rotating', help='using rotating in training', type=str2bool, default=False)
+parser.add_argument('-mr', '--max_rotating', help='using max rotation', type=str2bool, default=False)
+parser.add_argument('-r', '--rl_rotating', help='using rotating in training', type=str2bool, default=True)
 parser.add_argument('-t', '--test', help='just test', type=str2bool, default=False)
 parser.add_argument('-tr', '--test_rotating', help='test_rotating', type=str2bool, default=True)
 parser.add_argument('-uh', '--use_her', help='using HER', type=str2bool, default=False)
@@ -45,6 +46,7 @@ env.move_neg_reward = args.mnr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
 rl.rotating = args.rl_rotating
+rl.max_rotating = args.max_rotating
 just_test = args.test
 test_rot = args.test_rotating
 test_dia = True
@@ -205,6 +207,7 @@ def main():
     for bunch_number in range(1, train_epoch + 1):
         if not just_test:
             run_bunch(False, train_episode, bunch_number, False)
+            run_bunch(False, train_episode, bunch_number, False, False)
         bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, False, False)
         test_rewards.append(bunch_reward / test_episode)
         test_success.append(bunch_success)

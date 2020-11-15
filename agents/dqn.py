@@ -32,6 +32,7 @@ class DeepQ:
         self.use_double = False
         self.loss_values = []
         self.rotating = False
+        self.max_rotating = False
         pass
 
     def create_model_cnn_dense(self):
@@ -111,16 +112,21 @@ class DeepQ:
     def add_to_buffer(self, state, action, reward, next_state, done, train=True):
         if done:
             next_state = None
+        next_states = [next_state]
+        for i in range(3):
+            if next_state is not None:
+                next_state = np.rot90(next_state)
+                next_states.append(next_state)
+            else:
+                next_states.append(None)
 
-        transition = Transition(state, action, reward, next_state)
+        transition = Transition(state, action, reward, next_states)
         self.buffer.add(transition)
         if self.rotating:
             for i in range(3):
                 state = np.rot90(state)
-                if next_state is not None:
-                    next_state = np.rot90(next_state)
                 action = DeepQ.rotate_action(action)
-                transition = Transition(state, action, reward, next_state)
+                transition = Transition(state, action, reward, next_states)
                 self.buffer.add(transition)
         if train:
             self.train()
@@ -143,54 +149,61 @@ class DeepQ:
             is_image_param = True
 
         states_view = []
-        next_states_view = []
+        next_states_view1 = []
+        next_states_view2 = []
+        next_states_view3 = []
+        next_states_view4 = []
         states_param = []
         next_states_param = []
         for t in transits:
-            if is_image_param:
-                states_view.append(t.state[0])
-                states_param.append(t.state[1])
-                if t.is_end:
-                    next_states_view.append(t.state[0])
-                    next_states_param.append(t.state[1])
-                else:
-                    next_states_view.append(t.next_state[0])
-                    next_states_param.append(t.next_state[1])
+            states_view.append(t.state)
+            if t.is_end:
+                next_states_view1.append(t.state)
+                next_states_view2.append(t.state)
+                next_states_view3.append(t.state)
+                next_states_view4.append(t.state)
             else:
-                states_view.append(t.state)
-                if t.is_end:
-                    next_states_view.append(t.state)
-                else:
-                    next_states_view.append(t.next_state)
+                next_states_view1.append(t.next_state[0])
+                next_states_view2.append(t.next_state[1])
+                next_states_view3.append(t.next_state[2])
+                next_states_view4.append(t.next_state[3])
 
         if is_image_param:
             states_view = array(states_view)
-            next_states_view = array(next_states_view)
+            # next_states_view = array(next_states_view)
             states_param = array(states_param)
             next_states_param = array(next_states_param)
         else:
             states_view = array(states_view)
-            next_states_view = array(next_states_view)
+            next_states_view1 = array(next_states_view1)
+            next_states_view2 = array(next_states_view2)
+            next_states_view3 = array(next_states_view3)
+            next_states_view4 = array(next_states_view4)
 
         if is_image_param:
             states_view = [states_view, states_param]
-            next_states_view = [next_states_view, next_states_param]
+            # next_states_view = [next_states_view, next_states_param]
         q = self.model.predict(states_view)
         best_q_action = np.argmax(q, axis=1)
-        next_q = self.target_network.predict(next_states_view)
 
-        if self.use_double:
-            next_states_max_q = []
-            for i in best_q_action:
-                next_states_max_q.append(next_q[len(next_states_max_q)][i])
-            next_states_max_q = np.array(next_states_max_q)
-        else:
-            next_states_max_q = np.max(next_q, axis=1).flatten()
+        next_q1 = self.target_network.predict(next_states_view1)
+        next_q2 = self.target_network.predict(next_states_view2)
+        next_q3 = self.target_network.predict(next_states_view3)
+        next_q4 = self.target_network.predict(next_states_view4)
+
+        next_states_max_q1 = np.max(next_q1, axis=1).flatten()
+        next_states_max_q2 = np.max(next_q2, axis=1).flatten()
+        next_states_max_q3 = np.max(next_q3, axis=1).flatten()
+        next_states_max_q4 = np.max(next_q4, axis=1).flatten()
 
         for i in range(len(transits)):
             q_learning = transits[i].reward
             if not transits[i].is_end:
-                q_learning += (self.gama * next_states_max_q[i])
+                if self.max_rotating:
+                    next_q_max = max(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i], next_states_max_q4[i])
+                else:
+                    next_q_max = next_states_max_q1[i]
+                q_learning += (self.gama * next_q_max)
             diff = (q_learning - q[i][transits[i].action]) * transits[i].value
             q[i][transits[i].action] += diff
 
