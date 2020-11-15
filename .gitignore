@@ -1,0 +1,6 @@
+
+*.pyc
+agents/test_*
+agents/results/*
+.idea
+*.egg
