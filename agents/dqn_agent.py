@@ -155,11 +155,11 @@ def process_results(rewards, successes):
     plt.show()
     for k in keys:
         file = open(os.path.join(run_name, k + '_rewards.txt'), 'w')
-        for x in rewards:
+        for x in rewards[k]:
             file.write(str(x) + '\n')
         file.close()
         file = open(os.path.join(run_name, k + '_successes.txt'), 'w')
-        for x in successes:
+        for x in successes[k]:
             file.write(str(x) + '\n')
         file.close()
     file = open(os.path.join(run_name, 'loss.txt'), 'w')
