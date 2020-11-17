@@ -112,22 +112,31 @@ class DeepQ:
     def add_to_buffer(self, state, action, reward, next_state, done, train=True):
         if done:
             next_state = None
-        next_states = [next_state]
-        for i in range(3):
-            if next_state is not None:
-                next_state = np.rot90(next_state)
-                next_states.append(next_state)
-            else:
-                next_states.append(None)
 
-        transition = Transition(state, action, reward, next_states)
-        self.buffer.add(transition)
         if self.rotating:
-            for i in range(3):
-                state = np.rot90(state)
-                action = DeepQ.rotate_action(action)
-                transition = Transition(state, action, reward, next_states)
-                self.buffer.add(transition)
+            if self.max_rotating:
+                next_states = [next_state]
+                for i in range(3):
+                    if next_state is not None:
+                        next_state = np.rot90(next_state)
+                        next_states.append(next_state)
+                    else:
+                        next_states.append(None)
+                for i in range(4):
+                    state = np.rot90(state)
+                    action = DeepQ.rotate_action(action)
+                    transition = Transition(state, action, reward, next_states)
+                    self.buffer.add(transition)
+            else:
+                for i in range(4):
+                    state = np.rot90(state)
+                    action = DeepQ.rotate_action(action)
+                    next_state = np.rot90(next_state)
+                    transition = Transition(state, action, reward, [next_state])
+                    self.buffer.add(transition)
+        else:
+            transition = Transition(state, action, reward, [next_state])
+            self.buffer.add(transition)
         if train:
             self.train()
             if next_state is None:  # End step in episode
@@ -159,48 +168,46 @@ class DeepQ:
             states_view.append(t.state)
             if t.is_end:
                 next_states_view1.append(t.state)
-                next_states_view2.append(t.state)
-                next_states_view3.append(t.state)
-                next_states_view4.append(t.state)
+                if self.max_rotating:
+                    next_states_view2.append(t.state)
+                    next_states_view3.append(t.state)
+                    next_states_view4.append(t.state)
             else:
                 next_states_view1.append(t.next_state[0])
-                next_states_view2.append(t.next_state[1])
-                next_states_view3.append(t.next_state[2])
-                next_states_view4.append(t.next_state[3])
+                if self.max_rotating:
+                    next_states_view2.append(t.next_state[1])
+                    next_states_view3.append(t.next_state[2])
+                    next_states_view4.append(t.next_state[3])
 
-        if is_image_param:
-            states_view = array(states_view)
-            # next_states_view = array(next_states_view)
-            states_param = array(states_param)
-            next_states_param = array(next_states_param)
-        else:
-            states_view = array(states_view)
-            next_states_view1 = array(next_states_view1)
+
+        states_view = array(states_view)
+        next_states_view1 = array(next_states_view1)
+        if self.max_rotating:
             next_states_view2 = array(next_states_view2)
             next_states_view3 = array(next_states_view3)
             next_states_view4 = array(next_states_view4)
 
-        if is_image_param:
-            states_view = [states_view, states_param]
-            # next_states_view = [next_states_view, next_states_param]
         q = self.model.predict(states_view)
         best_q_action = np.argmax(q, axis=1)
 
         next_q1 = self.target_network.predict(next_states_view1)
-        next_q2 = self.target_network.predict(next_states_view2)
-        next_q3 = self.target_network.predict(next_states_view3)
-        next_q4 = self.target_network.predict(next_states_view4)
-
         next_states_max_q1 = np.max(next_q1, axis=1).flatten()
-        next_states_max_q2 = np.max(next_q2, axis=1).flatten()
-        next_states_max_q3 = np.max(next_q3, axis=1).flatten()
-        next_states_max_q4 = np.max(next_q4, axis=1).flatten()
+        if self.max_rotating:
+            next_q2 = self.target_network.predict(next_states_view2)
+            next_q3 = self.target_network.predict(next_states_view3)
+            next_q4 = self.target_network.predict(next_states_view4)
+            next_states_max_q2 = np.max(next_q2, axis=1).flatten()
+            next_states_max_q3 = np.max(next_q3, axis=1).flatten()
+            next_states_max_q4 = np.max(next_q4, axis=1).flatten()
 
         for i in range(len(transits)):
             q_learning = transits[i].reward
             if not transits[i].is_end:
                 if self.max_rotating:
                     next_q_max = max(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i], next_states_max_q4[i])
+                    # next_q_max = min(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i], next_states_max_q4[i])
+                    # next_q_max = (next_states_max_q1[i] + next_states_max_q2[i] + next_states_max_q3[i] + next_states_max_q4[i]) / 4.0
+                    # next_q_max = next_states_max_q1[i]
                 else:
                     next_q_max = next_states_max_q1[i]
                 q_learning += (self.gama * next_q_max)
