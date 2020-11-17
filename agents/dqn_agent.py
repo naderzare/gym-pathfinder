@@ -22,12 +22,13 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--sparse', help='using sparse reward', type=str2bool, default=False)
-parser.add_argument('-maxr', '--max_reward', help='goal reward', type=float, default=2)
-parser.add_argument('-minr', '--min_reward', help='sparse other reward, wall reward, ...', type=float, default=-2)
-parser.add_argument('--tnr', help='time negative reward', type=str2bool, default=False)
-parser.add_argument('--mnr', help='move negative reward', type=str2bool, default=False)
-parser.add_argument('-mr', '--max_rotating', help='using max rotation', type=str2bool, default=False)
-parser.add_argument('-r', '--rl_rotating', help='using rotating in training', type=str2bool, default=True)
+parser.add_argument('-maxr', help='goal reward', type=float, default=2)
+parser.add_argument('-minr', help='sparse other reward, wall reward, ...', type=float, default=-2)
+parser.add_argument('-tnr', help='time negative reward', type=str2bool, default=False)
+parser.add_argument('-mnr', help='move negative reward', type=str2bool, default=False)
+parser.add_argument('-mr', help='using max rotation', type=str2bool, default=False)
+parser.add_argument('-mrf', help='Rotation function', type=str, default='max')
+parser.add_argument('-r', help='using rotating in training', type=str2bool, default=True)
 parser.add_argument('-t', '--test', help='just test', type=str2bool, default=False)
 parser.add_argument('-tr', '--test_rotating', help='test_rotating', type=str2bool, default=True)
 parser.add_argument('-uh', '--use_her', help='using HER', type=str2bool, default=False)
@@ -46,8 +47,9 @@ env.min_reward = args.minr
 env.max_reward = args.maxr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
-rl.rotating = args.rl_rotating
-rl.max_rotating = args.max_rotating
+rl.rotating = args.r
+rl.max_rotating = args.mr
+rl.max_rotating_function = args.mrf
 just_test = args.test
 test_rot = args.test_rotating
 test_dia = True
@@ -55,6 +57,37 @@ use_her = args.use_her
 her_type = args.her_type
 her_number = args.her_number
 run_name = args.name
+
+if args.r:
+    run_name += '_rot'
+else:
+    run_name += '_simple'
+if args.mr:
+    run_name += '_'
+    run_name += args.mrf
+else:
+    run_name += '_not'
+if args.sparse:
+    run_name += '_sparse'
+else:
+    run_name += '_contin'
+if args.mnr:
+    run_name += '_neg'
+else:
+    run_name += '_pos'
+minr = abs(args.minr)
+maxr = args.minr
+if minr == maxr:
+    run_name += '_22'
+elif minr == 2.0:
+    run_name += '_20'
+elif minr == 0.0:
+    run_name += '_02'
+else:
+    run_name += '_10'
+print(run_name)
+exit()
+
 
 if not os.path.exists(run_name):
     os.makedirs(run_name)

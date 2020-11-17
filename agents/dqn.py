@@ -33,6 +33,7 @@ class DeepQ:
         self.loss_values = []
         self.rotating = False
         self.max_rotating = False
+        self.max_rotating_function = 'max'
         pass
 
     def create_model_cnn_dense(self):
@@ -204,10 +205,14 @@ class DeepQ:
             q_learning = transits[i].reward
             if not transits[i].is_end:
                 if self.max_rotating:
-                    next_q_max = max(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i], next_states_max_q4[i])
-                    # next_q_max = min(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i], next_states_max_q4[i])
-                    # next_q_max = (next_states_max_q1[i] + next_states_max_q2[i] + next_states_max_q3[i] + next_states_max_q4[i]) / 4.0
-                    # next_q_max = next_states_max_q1[i]
+                    if self.max_rotating_function == 'max':
+                        next_q_max = max(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i], next_states_max_q4[i])
+                    elif self.max_rotating_function == 'min':
+                        next_q_max = min(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i], next_states_max_q4[i])
+                    elif self.max_rotating_function == 'avg':
+                        next_q_max = (next_states_max_q1[i] + next_states_max_q2[i] + next_states_max_q3[i] + next_states_max_q4[i]) / 4.0
+                    else:
+                        next_q_max = next_states_max_q1[i]
                 else:
                     next_q_max = next_states_max_q1[i]
                 q_learning += (self.gama * next_q_max)
