@@ -69,7 +69,7 @@ f.write(str(args))
 f.close()
 
 train_episode = 1000
-train_epoch = 200
+train_epoch = 100
 test_episode = 100
 
 
