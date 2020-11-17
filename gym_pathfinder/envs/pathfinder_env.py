@@ -27,6 +27,8 @@ class PathFinderEnv(gym.Env):
         self.free_value = 0.0
         self.goal_value = 0.5
         self.agent_value = 1.0
+        self.max_reward = 2.0
+        self.min_reward = -2.0
         self.random_walls = 5
         self.map_path = {}
         self.maps = {}
@@ -76,25 +78,25 @@ class PathFinderEnv(gym.Env):
         done = False
         if self.sparse_reward:
             if len(next_agent_position[0]) == 0:
-                reward = 2
+                reward = self.max_reward
                 done = True
             elif goal_position == next_agent_position:
-                reward = 2
+                reward = self.max_reward
                 done = True
             else:
-                reward = -2
+                reward = self.min_reward
         else:
             if len(next_agent_position[0]) == 0:
-                reward = 2
+                reward = self.max_reward
                 done = True
             elif goal_position == next_agent_position:
-                reward = 2
+                reward = self.max_reward
                 done = True
             elif next_agent_position[0] < 0 \
                     or next_agent_position[0] > self.observation_space.shape[0] \
                     or next_agent_position[1] < 0 or next_agent_position[1] > self.observation_space.shape[1] \
                     or next_agent_position in self.walls:
-                reward = -2
+                reward = self.min_reward
                 done = True
             else:
                 c_diff = abs(next_agent_position[0] - goal_position[0]) + abs(
@@ -106,7 +108,7 @@ class PathFinderEnv(gym.Env):
                     reward -= 0.02
                 if self.time_neg_reward:
                     if self.current_step > 50:
-                        reward = -2
+                        reward = self.min_reward
         return reward, done
 
     def step(self, action):

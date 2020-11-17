@@ -22,6 +22,8 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--sparse', help='using sparse reward', type=str2bool, default=False)
+parser.add_argument('-maxr', '--max_reward', help='goal reward', type=float, default=2)
+parser.add_argument('-minr', '--min_reward', help='sparse other reward, wall reward, ...', type=float, default=-2)
 parser.add_argument('--tnr', help='time negative reward', type=str2bool, default=False)
 parser.add_argument('--mnr', help='move negative reward', type=str2bool, default=False)
 parser.add_argument('-mr', '--max_rotating', help='using max rotation', type=str2bool, default=False)
@@ -33,14 +35,15 @@ parser.add_argument('-ht', '--her_type', help='HER Type', type=str, default='fut
 parser.add_argument('-hn', '--her_number', help='HER Number', type=int, default=4)
 parser.add_argument('-n', '--name', help='Run Name', type=str, default='test_'+str(time.time()))
 args = parser.parse_args()
-import gym_pathfinder
+
 env = gym.make('gym_pathfinder:pathfinder-v0')
-env.add_map_path('horizontal', '/home/nader/workspace/rl/gym-pathfinder/agents/maps/vertical_map/', 'vertical')
-env.add_map_path('diagonal', '/home/nader/workspace/rl/gym-pathfinder/agents/maps/diagonal_map/')
+env.add_map_path('horizontal', './maps/vertical_map/', 'vertical')
+env.add_map_path('diagonal', './maps/diagonal_map/')
 
 env.sparse_reward = args.sparse
 env.time_neg_reward = args.tnr
-env.move_neg_reward = args.mnr
+env.min_reward = args.minr
+env.max_reward = args.maxr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
 rl.rotating = args.rl_rotating
