@@ -132,7 +132,8 @@ class DeepQ:
                 for i in range(4):
                     state = np.rot90(state)
                     action = DeepQ.rotate_action(action)
-                    next_state = np.rot90(next_state)
+                    if next_state is not None:
+                        next_state = np.rot90(next_state)
                     transition = Transition(state, action, reward, [next_state])
                     self.buffer.add(transition)
         else:
