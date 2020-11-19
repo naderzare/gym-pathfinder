@@ -22,8 +22,9 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--sparse', help='using sparse reward', type=str2bool, default=False)
-parser.add_argument('-maxr', help='goal reward', type=float, default=2)
-parser.add_argument('-minr', help='sparse other reward, wall reward, ...', type=float, default=-2)
+parser.add_argument('-maxr', help='max reward', type=float, default=2)
+parser.add_argument('-minr', help='min reward', type=float, default=-2)
+parser.add_argument('-normr', help='normal reward', type=float, default=0.02)
 parser.add_argument('-tnr', help='time negative reward', type=str2bool, default=False)
 parser.add_argument('-mnr', help='move negative reward', type=str2bool, default=False)
 parser.add_argument('-mr', help='using max rotation', type=str2bool, default=False)
@@ -45,6 +46,7 @@ env.sparse_reward = args.sparse
 env.time_neg_reward = args.tnr
 env.min_reward = args.minr
 env.max_reward = args.maxr
+env.abs_normal_reward = args.normr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
 rl.rotating = args.r
@@ -75,20 +77,9 @@ if args.mnr:
     run_name += '_neg'
 else:
     run_name += '_pos'
-minr = abs(args.minr)
-maxr = args.minr
-if minr == maxr:
-    run_name += '_22'
-elif minr == 2.0:
-    run_name += '_20'
-elif minr == 0.0:
-    run_name += '_02'
-else:
-    run_name += '_10'
+run_name += '_r' + str(env.minr) + '_' + str(env.maxr) + '_' + str(env.normr)
 print(run_name)
 exit()
-
-
 if not os.path.exists(run_name):
     os.makedirs(run_name)
 if just_test:
@@ -229,6 +220,7 @@ def main():
 
 
 if __name__ == '__main__':
+    main()
     try:
         main()
     except Exception as e:
