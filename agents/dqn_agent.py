@@ -77,9 +77,8 @@ if args.mnr:
     run_name += '_neg'
 else:
     run_name += '_pos'
-run_name += '_r' + str(env.minr) + '_' + str(env.maxr) + '_' + str(env.normr)
+run_name += '_r' + str(args.minr) + '_' + str(args.maxr) + '_' + str(args.normr)
 print(run_name)
-exit()
 if not os.path.exists(run_name):
     os.makedirs(run_name)
 if just_test:
