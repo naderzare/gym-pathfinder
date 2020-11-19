@@ -1,0 +1,1 @@
+Namespace(her_number=4, her_type='future', map='/users/research/zare/workspace/gym-pathfinder/agents/maps/vertical_map', mnr=True, name='D2', rl_rotating=True, sparse=False, test=False, test_rotating=True, tnr=False, use_her=True)
