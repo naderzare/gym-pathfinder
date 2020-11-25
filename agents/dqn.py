@@ -101,9 +101,9 @@ class DeepQ:
 
     def get_random_action(self, state, p_rnd=0.1):
         if random.random() < p_rnd:
-            return random.randrange(self.action_number)
+            return random.randrange(self.action_number), 0
         best_action, best_q = self.get_best_action(state)
-        return best_action[0]
+        return best_action[0], best_q
 
     @staticmethod
     def rotate_action(ac):
