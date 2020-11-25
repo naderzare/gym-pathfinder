@@ -97,7 +97,10 @@ test_episode = 100
 
 
 def run_episode(is_test, ep, e, map_name):
+    dif_q_r = 0
     R = 0
+    rewards = []
+    q_values = []
     success = 0
     observations = []
     next_observations = []
@@ -109,9 +112,11 @@ def run_episode(is_test, ep, e, map_name):
         env.render()
     done = False
     while not done:
-        action = rl.get_random_action(obs, 0.0 if is_test else 0.1)
+        action, q_value = rl.get_random_action(obs, 0.0 if is_test else 0.1)
         prev_obs = copy.copy(obs)
         obs, reward, done, info = env.step(action)
+        q_values.append(q_value[0])
+        rewards.append(reward)
         R += reward
         if info['result'] == 'goal':
             success = 1
@@ -129,6 +134,10 @@ def run_episode(is_test, ep, e, map_name):
         if just_test:
             env.render()
             time.sleep(0.2)
+    if is_test:
+        all_rewards = sum([rewards[i] * (i + 1) for i in range(len(rewards))])
+        all_q_values = sum(q_values)
+        dif_q_r = all_q_values - all_rewards
     if not is_test:
         if use_her:
             for t in range(len(observations)):
@@ -162,24 +171,30 @@ def run_episode(is_test, ep, e, map_name):
         print(f'Epoch:{ep} Test Episode:{e} R:{R}')
     else:
         print(f'Epoch:{ep} Train Episode:{e} R:{R}')
-    return R, success
+    return R, success, dif_q_r
 
 
 def run_bunch(is_test, count_of_episodes, bunch_number, map_name):
     bunch_reward = 0
     bunch_success = 0
+    bunch_dif_q_r = 0
     for e in range(count_of_episodes):
-        reward, success = run_episode(is_test, bunch_number, e, map_name)
+        reward, success, dif_q_r = run_episode(is_test, bunch_number, e, map_name)
         bunch_reward += reward
         bunch_success += success
-    return bunch_reward, bunch_success
+        bunch_dif_q_r += dif_q_r
+    return bunch_reward, bunch_success, bunch_dif_q_r
 
 
-def process_results(rewards, successes):
+def process_results(rewards, successes, dif_q_r):
     keys = list(successes.keys())
     plt.plot(successes[keys[0]])
-    plt.show()
+    # plt.show()
     for k in keys:
+        file = open(os.path.join(run_name, k + '_difqr.txt'), 'w')
+        for x in dif_q_r[k]:
+            file.write(str(x) + '\n')
+        file.close()
         file = open(os.path.join(run_name, k + '_rewards.txt'), 'w')
         for x in rewards[k]:
             file.write(str(x) + '\n')
@@ -199,10 +214,13 @@ def main():
     test_maps = ['horizontal', 'vertical', 'diagonal']
     test_rewards = {x: [] for x in test_maps}
     test_success = {x: [] for x in test_maps}
+    test_dif_q_r = {x: [] for x in test_maps}
     for test_map in test_maps:
-        bunch_reward, bunch_success = run_bunch(True, test_episode, 0, test_map)
+        bunch_reward, bunch_success, bunch_dif_q_r = run_bunch(True, test_episode, 0, test_map)
         test_rewards[test_map].append(bunch_reward / test_episode)
         test_success[test_map].append(bunch_success)
+        test_dif_q_r[test_map].append(bunch_dif_q_r / test_episode)
+    process_results(test_rewards, test_success, test_dif_q_r)
     rl.model.save_weights(os.path.join(run_name, f'ep{0}.h5'))
 
     for bunch_number in range(1, train_epoch + 1):
@@ -210,16 +228,16 @@ def main():
             for train_map in train_maps:
                 run_bunch(False, train_episode, bunch_number, train_map)
         for test_map in test_maps:
-            bunch_reward, bunch_success = run_bunch(True, test_episode, bunch_number, test_map)
+            bunch_reward, bunch_success, bunch_dif_q_r = run_bunch(True, test_episode, bunch_number, test_map)
             test_rewards[test_map].append(bunch_reward / test_episode)
             test_success[test_map].append(bunch_success)
+            test_dif_q_r[test_map].append(bunch_dif_q_r / test_episode)
         rl.model.save_weights(os.path.join(run_name, f'ep{bunch_number}.h5'))
         if bunch_number % 10 == 0:
-            process_results(test_rewards, test_success)
+            process_results(test_rewards, test_success, test_dif_q_r)
 
 
 if __name__ == '__main__':
-    main()
     try:
         main()
     except Exception as e:
