@@ -212,6 +212,13 @@ class DeepQ:
                         next_q_max = min(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i], next_states_max_q4[i])
                     elif self.max_rotating_function == 'avg':
                         next_q_max = (next_states_max_q1[i] + next_states_max_q2[i] + next_states_max_q3[i] + next_states_max_q4[i]) / 4.0
+                    elif self.max_rotating_function == 'minmax':
+                        if self.episode_number < 33:
+                            next_q_max = min(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i],next_states_max_q4[i])
+                        elif self.episode_number < 66:
+                            next_q_max = (next_states_max_q1[i] + next_states_max_q2[i] + next_states_max_q3[i] + next_states_max_q4[i]) / 4.0
+                        else:
+                            next_q_max = max(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i],next_states_max_q4[i])
                     else:
                         next_q_max = next_states_max_q1[i]
                 else:
