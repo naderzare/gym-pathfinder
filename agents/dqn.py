@@ -25,7 +25,7 @@ class DeepQ:
         self.train_step_counter = train_step_counter
         self.action_number = 4
         self.transitions: List[Transition] = []
-        self.gama = 0.99
+        self.gama = 0.95
         self.episode_number = 0
         self.plan_number = 0
         self.step_number = 0
