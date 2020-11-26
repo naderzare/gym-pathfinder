@@ -126,10 +126,10 @@ def run_episode(is_test, ep, e, map_name):
         obs = obs.reshape((10, 10, 1))
         if not is_test:
             if info['result'] == 'time':
-                rl.add_to_buffer(prev_obs, action, reward, obs, False, False)
+                rl.add_to_buffer(prev_obs, action, reward, obs, False, False, True)
                 dones.append(False)
             else:
-                rl.add_to_buffer(prev_obs, action, reward, obs, done, False)
+                rl.add_to_buffer(prev_obs, action, reward, obs, done, False, done)
                 dones.append(done)
             observations.append(prev_obs)
             next_observations.append(obs)
