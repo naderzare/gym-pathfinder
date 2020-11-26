@@ -115,7 +115,10 @@ def run_episode(is_test, ep, e, map_name):
         action, q_value = rl.get_random_action(obs, 0.0 if is_test else 0.1)
         prev_obs = copy.copy(obs)
         obs, reward, done, info = env.step(action)
-        q_values.append(q_value[0])
+        if type(q_value) is int:
+            q_values.append(q_value)
+        else:
+            q_values.append(q_value[0])
         rewards.append(reward)
         R += reward
         if info['result'] == 'goal':
