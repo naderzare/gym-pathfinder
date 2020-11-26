@@ -110,7 +110,7 @@ class DeepQ:
         action_rot = [3, 0, 1, 2]
         return action_rot[ac]
 
-    def add_to_buffer(self, state, action, reward, next_state, done, train=True):
+    def add_to_buffer(self, state, action, reward, next_state, done, train=True, end_episode=False):
         if done:
             next_state = None
 
@@ -139,10 +139,10 @@ class DeepQ:
         else:
             transition = Transition(state, action, reward, [next_state])
             self.buffer.add(transition)
+        if end_episode:
+            self.episode_number += 1
         if train:
             self.train()
-            if next_state is None:  # End step in episode
-                self.episode_number += 1
 
     def train(self):
         self.step_number += 1
@@ -213,9 +213,9 @@ class DeepQ:
                     elif self.max_rotating_function == 'avg':
                         next_q_max = (next_states_max_q1[i] + next_states_max_q2[i] + next_states_max_q3[i] + next_states_max_q4[i]) / 4.0
                     elif self.max_rotating_function == 'minmax':
-                        if self.episode_number < 33:
+                        if self.episode_number < 33000:
                             next_q_max = min(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i],next_states_max_q4[i])
-                        elif self.episode_number < 66:
+                        elif self.episode_number < 66000:
                             next_q_max = (next_states_max_q1[i] + next_states_max_q2[i] + next_states_max_q3[i] + next_states_max_q4[i]) / 4.0
                         else:
                             next_q_max = max(next_states_max_q1[i], next_states_max_q2[i], next_states_max_q3[i],next_states_max_q4[i])
