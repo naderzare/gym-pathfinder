@@ -215,6 +215,7 @@ def process_results(rewards, successes, dif_q_r):
 def main():
     train_maps = ['horizontal']
     test_maps = ['horizontal', 'vertical', 'diagonal']
+    test_results = {x: 0 for x in test_maps}
     test_rewards = {x: [] for x in test_maps}
     test_success = {x: [] for x in test_maps}
     test_dif_q_r = {x: [] for x in test_maps}
@@ -224,7 +225,6 @@ def main():
         test_success[test_map].append(bunch_success)
         test_dif_q_r[test_map].append(bunch_dif_q_r / test_episode)
     process_results(test_rewards, test_success, test_dif_q_r)
-    rl.model.save_weights(os.path.join(run_name, f'ep{0}.h5'))
 
     for bunch_number in range(1, train_epoch + 1):
         if not just_test:
@@ -235,7 +235,9 @@ def main():
             test_rewards[test_map].append(bunch_reward / test_episode)
             test_success[test_map].append(bunch_success)
             test_dif_q_r[test_map].append(bunch_dif_q_r / test_episode)
-        rl.model.save_weights(os.path.join(run_name, f'ep{bunch_number}.h5'))
+            if bunch_success > test_results[test_map]:
+                test_results[test_map] = bunch_success
+                rl.model.save_weights(os.path.join(run_name, f'best_{test_map}.h5'))
         if bunch_number % 10 == 0:
             process_results(test_rewards, test_success, test_dif_q_r)
 
