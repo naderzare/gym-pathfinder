@@ -29,6 +29,7 @@ parser.add_argument('-tnr', help='time negative reward', type=str2bool, default=
 parser.add_argument('-mnr', help='move negative reward', type=str2bool, default=False)
 parser.add_argument('-mr', help='using max rotation', type=str2bool, default=False)
 parser.add_argument('-mrf', help='Rotation function', type=str, default='max')
+parser.add_argument('-rl', help='RL type', type=str, default='dqn')
 parser.add_argument('-r', help='using rotating in training', type=str2bool, default=True)
 parser.add_argument('-t', '--test', help='just test', type=str2bool, default=False)
 parser.add_argument('-tr', '--test_rotating', help='test_rotating', type=str2bool, default=True)
@@ -52,6 +53,7 @@ rl.create_model_cnn_dense()
 rl.rotating = args.r
 rl.max_rotating = args.mr
 rl.max_rotating_function = args.mrf
+rl.rl_type = args.rl
 just_test = args.test
 test_rot = args.test_rotating
 test_dia = True
@@ -77,7 +79,7 @@ if args.mnr:
     run_name += '_neg'
 else:
     run_name += '_pos'
-run_name += '_r' + str(args.minr) + '_' + str(args.maxr) + '_' + str(args.normr)
+run_name += '_r' + str(args.minr) + '_' + str(args.maxr) + '_' + str(args.normr) + '_' + args.rl
 print(run_name)
 if not os.path.exists(run_name):
     os.makedirs(run_name)
@@ -85,15 +87,15 @@ if just_test:
     rl.read_weight(os.path.join('/home/nader/workspace/rl/gym-pathfinder/agents/results/jul24/testF', 'ep175.h5'))
 
 f = open(os.path.join(run_name, 'model.txt'), 'w')
-f.write(str(rl.model.to_json()))
+f.write(str(rl.online_network.to_json()))
 f.close()
 f = open(os.path.join(run_name, 'config.txt'), 'w')
 f.write(str(args))
 f.close()
 
-train_episode = 1000
-train_epoch = 100
-test_episode = 100
+train_episode = 200
+train_epoch = 20
+test_episode = 10
 
 
 def run_episode(is_test, ep, e, map_name):
@@ -237,7 +239,7 @@ def main():
             test_dif_q_r[test_map].append(bunch_dif_q_r / test_episode)
             if bunch_success > test_results[test_map]:
                 test_results[test_map] = bunch_success
-                rl.model.save_weights(os.path.join(run_name, f'best_{test_map}.h5'))
+                rl.online_network.save_weights(os.path.join(run_name, f'best_{test_map}.h5'))
         if bunch_number % 10 == 0:
             process_results(test_rewards, test_success, test_dif_q_r)
 
