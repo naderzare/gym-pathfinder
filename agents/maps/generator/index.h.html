@@ -14,6 +14,15 @@
     table, th, td {
       border: 1px solid black;
     }
+    .noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
 </style>
 
 <body>
@@ -31,7 +40,13 @@
 </body>
 <script>
     var i_counter = 10, j_counter = 10;
-
+    var mouseDown = 0;
+    document.body.onmousedown = function() {
+      ++mouseDown;
+    }
+    document.body.onmouseup = function() {
+      --mouseDown;
+    }
     function create() {
         i_counter = document.getElementById('i_counter').value;
         j_counter = document.getElementById('j_counter').value;
@@ -47,12 +62,24 @@
                 var cell = row.insertCell(j);
                 cell.innerHTML = i + "," + j;
                 cell.id = i + "," + j
-                cell.addEventListener('click', function () {
-                    if (this.style.backgroundColor=='black'){
-                        this.style.backgroundColor='white'
-                    }else{
-                        this.style.backgroundColor='black'
+                cell.className = 'noselect'
+                cell.addEventListener('mouseenter', function () {
+                    console.log(mouseDown)
+                    if (mouseDown > 0){
+                        if (this.style.backgroundColor=='black'){
+                            this.style.backgroundColor='white'
+                        }else{
+                            this.style.backgroundColor='black'
+                        }
                     }
+                })
+                cell.addEventListener('mousedown', function () {
+                    console.log(mouseDown)
+                        if (this.style.backgroundColor=='black'){
+                            this.style.backgroundColor='white'
+                        }else{
+                            this.style.backgroundColor='black'
+                        }
                 })
             }
         }
