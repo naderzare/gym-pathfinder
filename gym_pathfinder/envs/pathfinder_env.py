@@ -101,12 +101,12 @@ class PathFinderEnv(gym.Env):
                     self.agent_position[1] - self.goal_position[1])
                 p_diff = abs(previous_position[0] - self.goal_position[0]) + abs(
                     previous_position[1] - self.goal_position[1])
-                reward = (p_diff - c_diff) / 50
+                reward = (p_diff - c_diff) / self.episode_max_cycle
                 reward = min(self.abs_normal_reward, max(-self.abs_normal_reward, reward))
                 if self.move_neg_reward:
                     reward -= 0.02
                 if self.time_neg_reward:
-                    if self.current_step > 50:
+                    if self.current_step > self.episode_max_cycle:
                         reward = self.min_reward
 
         done = bool(self.goal_position == self.agent_position
@@ -115,7 +115,7 @@ class PathFinderEnv(gym.Env):
                     or self.agent_position[1] < 0
                     or self.agent_position[1] > self.observation_space.shape[1] - 1
                     or self.agent_position in self.walls
-                    or self.current_step > 50
+                    or self.current_step > self.episode_max_cycle
                     )
         information = {'result': 'normal'}
         if done:
@@ -123,7 +123,7 @@ class PathFinderEnv(gym.Env):
                 information['result'] = 'goal'
             elif self.agent_position in self.walls:
                 information['result'] = 'wall'
-            elif self.current_step > 50:
+            elif self.current_step > self.episode_max_cycle:
                 information['result'] = 'time'
             else:
                 information['result'] = 'out'

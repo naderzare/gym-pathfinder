@@ -51,6 +51,8 @@ env.sparse_reward = args.sparse
 env.time_neg_reward = args.tnr
 env.min_reward = args.minr
 env.max_reward = args.maxr
+env.episode_max_cycle = 70
+
 env.abs_normal_reward = args.normr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
 rl.create_model_cnn_dense()
