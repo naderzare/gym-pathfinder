@@ -9,11 +9,11 @@ class PathFinderEnv(gym.Env):
     """Custom Environment that follows gym interface"""
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, count_i=10, count_j=10):
         super(PathFinderEnv, self).__init__()
         self.sparse_reward = False
-        self.count_i = 10
-        self.count_j = 10
+        self.count_i = count_i
+        self.count_j = count_j
         self.action_space = spaces.Box(low=np.array([0]), high=np.array([3]), dtype=np.float16)
         self.observation_space = spaces.Box(low=0, high=1, shape=(self.count_i, self.count_j), dtype=np.float16)
         self.current_step = 0
@@ -60,7 +60,7 @@ class PathFinderEnv(gym.Env):
             obs[self.goal_position[0], self.goal_position[1]] = self.goal_value
             for w in self.walls:
                 obs[w[0], w[1]] = self.wall_value
-        obs = obs.reshape((10, 10, 1))
+        obs = obs.reshape((self.count_i, self.count_j, 1))
         return obs
 
     def _take_action(self, action):
@@ -133,7 +133,7 @@ class PathFinderEnv(gym.Env):
         return obs, reward, done, information
 
     def agent_to_goal_available(self):
-        map = [[0 for _ in range(10)] for _ in range(10)]
+        map = [[0 for _ in range(self.count_i)] for _ in range(self.count_j)]
         for w in self.walls:
             map[w[0]][w[1]] = -1
         map[self.agent_position[0]][self.agent_position[1]] = 1
@@ -144,7 +144,7 @@ class PathFinderEnv(gym.Env):
             neiburs = [[center[0] + 1, center[1]], [center[0] - 1, center[1]], [center[0], center[1] - 1],
                        [center[0], center[1] + 1]]
             for n in neiburs:
-                if n[0] >= 10 or n[0] < 0 or n[1] >= 10 or n[1] < 0:
+                if n[0] >= self.count_i or n[0] < 0 or n[1] >= self.count_i or n[1] < 0:
                     continue
                 if map[n[0]][n[1]] == 0:
                     queue.append([n[0], n[1]])
@@ -156,7 +156,7 @@ class PathFinderEnv(gym.Env):
 
     def reset(self, map_name=None):
         wall_inserted = 0
-        free_cell = [[i, j] for i in range(10) for j in range(10)]
+        free_cell = [[i, j] for i in range(self.count_i) for j in range(self.count_j)]
         self.walls = []
         self.current_map = []
         if map_name is not None:
