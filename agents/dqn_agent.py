@@ -37,11 +37,15 @@ parser.add_argument('-uh', '--use_her', help='using HER', type=str2bool, default
 parser.add_argument('-ht', '--her_type', help='HER Type', type=str, default='future')
 parser.add_argument('-hn', '--her_number', help='HER Number', type=int, default=4)
 parser.add_argument('-n', '--name', help='Run Name', type=str, default='test_'+str(time.time()))
+parser.add_argument('-si', '--size_i', help='size i', type=int, default=10)
+parser.add_argument('-sj', '--size_j', help='size j', type=int, default=10)
 args = parser.parse_args()
 
-env = gym.make('gym_pathfinder:pathfinder-v0')
-env.add_map_path('horizontal', './maps/vertical_map/', 'vertical')
-env.add_map_path('diagonal', './maps/diagonal_map/')
+env = gym.make('gym_pathfinder:pathfinder-v0', count_i=args.si, count_j=args.sj)
+# env = PathFinderEnv(args.si, args.sj)
+
+env.add_map_path('horizontal', './maps/20_20/vertical_map/', 'vertical')
+env.add_map_path('diagonal', './maps/20_20/diagonal_map/')
 
 env.sparse_reward = args.sparse
 env.time_neg_reward = args.tnr
