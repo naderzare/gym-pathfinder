@@ -35,11 +35,13 @@ class DeepQ:
         self.max_rotating = False
         self.max_rotating_function = 'max'
         self.rl_type = 'dqn'
+        self.input_shape_i = 10
+        self.input_shape_j = 10
         pass
 
     def create_model_cnn_dense(self):
         self.model_type = 'image'
-        in1 = layers.Input((10, 10, 1,))
+        in1 = layers.Input((self.input_shape_i, self.input_shape_j, 1,))
         m1 = layers.Conv2D(16, (2, 2), strides=(1, 1), activation='relu')(in1)
         m1 = layers.Conv2D(16, (2, 2), strides=(1, 1), activation='relu')(m1)
         m1 = layers.Conv2D(16, (2, 2), strides=(1, 1), activation='relu')(m1)
@@ -89,7 +91,7 @@ class DeepQ:
     def get_best_action(self, state):
         if self.model_type == 'image':
             if state.ndim == 3:
-                state = state.reshape((1, 10, 10, 1))
+                state = state.reshape((1, self.input_shape_i, self.input_shape_j, 1))
         elif self.model_type == 'param':
             if state.ndim == 1:
                 state = state.reshape((1, state.shape[0]))

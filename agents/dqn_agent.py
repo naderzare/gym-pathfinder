@@ -37,8 +37,8 @@ parser.add_argument('-uh', '--use_her', help='using HER', type=str2bool, default
 parser.add_argument('-ht', '--her_type', help='HER Type', type=str, default='future')
 parser.add_argument('-hn', '--her_number', help='HER Number', type=int, default=4)
 parser.add_argument('-n', '--name', help='Run Name', type=str, default='test_'+str(time.time()))
-parser.add_argument('-si', '--size_i', help='size i', type=int, default=10)
-parser.add_argument('-sj', '--size_j', help='size j', type=int, default=10)
+parser.add_argument('-si', help='size i', type=int, default=10)
+parser.add_argument('-sj', help='size j', type=int, default=10)
 args = parser.parse_args()
 
 env = gym.make('gym_pathfinder:pathfinder-v0', count_i=args.si, count_j=args.sj)
@@ -51,7 +51,7 @@ env.sparse_reward = args.sparse
 env.time_neg_reward = args.tnr
 env.min_reward = args.minr
 env.max_reward = args.maxr
-env.episode_max_cycle = 70
+env.episode_max_cycle = 100
 
 env.abs_normal_reward = args.normr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
@@ -60,6 +60,8 @@ rl.rotating = args.r
 rl.max_rotating = args.mr
 rl.max_rotating_function = args.mrf
 rl.rl_type = args.rl
+rl.input_shape_i = args.si
+rl.input_shape_j = args.sj
 just_test = args.test
 test_rot = args.test_rotating
 test_dia = True
@@ -99,9 +101,9 @@ f = open(os.path.join(run_name, 'config.txt'), 'w')
 f.write(str(args))
 f.close()
 
-train_episode = 200
-train_epoch = 20
-test_episode = 10
+train_episode = 1000
+train_epoch = 100
+test_episode = 100
 
 
 def run_episode(is_test, ep, e, map_name):
@@ -115,7 +117,7 @@ def run_episode(is_test, ep, e, map_name):
     actions = []
     dones = []
     obs = env.reset(map_name)
-    obs = obs.reshape((10, 10, 1))
+    obs = obs.reshape((args.si, args.sj, 1))
     if just_test:
         env.render()
     done = False
@@ -131,7 +133,7 @@ def run_episode(is_test, ep, e, map_name):
         R += reward
         if info['result'] == 'goal':
             success = 1
-        obs = obs.reshape((10, 10, 1))
+        obs = obs.reshape((args.si, args.sj, 1))
         if not is_test:
             if info['result'] == 'time':
                 rl.add_to_buffer(prev_obs, action, reward, obs, False, False, True)
@@ -176,7 +178,7 @@ def run_episode(is_test, ep, e, map_name):
                     if type(reward) == np.ndarray:
                         reward = float(reward[0])
                     rl.add_to_buffer(obs, action, reward, next_obs, done, False)
-        for t in range(20):
+        for t in range(40):
             rl.train()
     if is_test:
         print(f'Epoch:{ep} Test Episode:{e} R:{R}')
@@ -215,9 +217,9 @@ def process_results(rewards, successes, dif_q_r):
             file.write(str(x) + '\n')
         file.close()
     file = open(os.path.join(run_name, 'loss.txt'), 'w')
-    for x in rl.loss_values:
-        file.write(str(x) + '\n')
-    file.close()
+    # for x in rl.loss_values:
+    #     file.write(str(x) + '\n')
+    # file.close()
 
 
 def main():
