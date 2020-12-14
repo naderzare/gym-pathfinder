@@ -44,6 +44,8 @@ args = parser.parse_args()
 env = gym.make('gym_pathfinder:pathfinder-v0', count_i=args.si, count_j=args.sj)
 # env = PathFinderEnv(args.si, args.sj)
 
+env.count_i = args.si
+env.count_j = args.sj
 env.add_map_path('horizontal', './maps/20_20/vertical_map/', 'vertical')
 env.add_map_path('diagonal', './maps/20_20/diagonal_map/')
 
@@ -55,13 +57,13 @@ env.episode_max_cycle = 100
 
 env.abs_normal_reward = args.normr
 rl = DeepQ(train_interval_step=1, train_step_counter=32)
+rl.input_shape_i = args.si
+rl.input_shape_j = args.sj
 rl.create_model_cnn_dense()
 rl.rotating = args.r
 rl.max_rotating = args.mr
 rl.max_rotating_function = args.mrf
 rl.rl_type = args.rl
-rl.input_shape_i = args.si
-rl.input_shape_j = args.sj
 just_test = args.test
 test_rot = args.test_rotating
 test_dia = True
