@@ -7,6 +7,7 @@ import os
 import numpy as np
 import random
 import argparse
+from gym_pathfinder.envs.pathfinder_env import PathFinderEnv
 
 
 def str2bool(v):
@@ -37,12 +38,13 @@ parser.add_argument('-uh', '--use_her', help='using HER', type=str2bool, default
 parser.add_argument('-ht', '--her_type', help='HER Type', type=str, default='future')
 parser.add_argument('-hn', '--her_number', help='HER Number', type=int, default=4)
 parser.add_argument('-n', '--name', help='Run Name', type=str, default='test_'+str(time.time()))
-parser.add_argument('-si', help='size i', type=int, default=10)
-parser.add_argument('-sj', help='size j', type=int, default=10)
+parser.add_argument('-si', help='size i', type=int, default=20)
+parser.add_argument('-sj', help='size j', type=int, default=20)
 args = parser.parse_args()
 
-env = gym.make('gym_pathfinder:pathfinder-v0', count_i=args.si, count_j=args.sj)
-# env = PathFinderEnv(args.si, args.sj)
+# env = gym.make('gym_pathfinder:pathfinder-v0', count_i=args.si, count_j=args.sj)
+env = PathFinderEnv(args.si, args.sj)
+
 
 env.count_i = args.si
 env.count_j = args.sj
@@ -255,6 +257,7 @@ def main():
 
 
 if __name__ == '__main__':
+    main()
     try:
         main()
     except Exception as e:

@@ -1,0 +1,27 @@
+screen -m -d python dqn_agent.py -r n -mr n -mrf n --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl dqn -n t1 &
+screen -m -d python dqn_agent.py -r n -mr n -mrf n --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl more -n t2 &
+screen -m -d python dqn_agent.py -r n -mr n -mrf n --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl double -n t3 &
+
+screen -m -d python dqn_agent.py -r y -mr n -mrf n --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl dqn -n t4 &
+screen -m -d python dqn_agent.py -r y -mr n -mrf n --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl more -n t5 &
+screen -m -d python dqn_agent.py -r y -mr n -mrf n --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl double -n t6 &
+
+screen -m -d python dqn_agent.py -r y -mr y -mrf max --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl dqn -n t7 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf max --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl more -n t8 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf max --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl double -n t9 &
+
+screen -m -d python dqn_agent.py -r y -mr y -mrf min --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl dqn -n t10 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf min --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl more -n t11 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf min --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl double -n t12 &
+
+screen -m -d python dqn_agent.py -r y -mr y -mrf avg --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl dqn -n t13 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf avg --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl more -n t14 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf avg --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl double -n t15 &
+
+screen -m -d python dqn_agent.py -r y -mr y -mrf fir --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl dqn -n t16 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf fir --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl more -n t17 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf fir --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl double -n t18 &
+
+screen -m -d python dqn_agent.py -r y -mr y -mrf random --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl dqn -n t19 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf random --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl more -n t20 &
+screen -m -d python dqn_agent.py -r y -mr y -mrf random --sparse n -minr -2.0 -maxr 2.0 -mnr n -rl double -n t21 &

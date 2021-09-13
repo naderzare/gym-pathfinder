@@ -20,7 +20,7 @@ def natural_keys(text):
     '''
     return [ atoi(c) for c in re.split(r'(\d+)', text) ]
 
-path = 'results/res2'
+path = 'results/res'
 dirs = os.listdir(path)
 dirs.sort(key=natural_keys)
 avg_number = 1
@@ -30,26 +30,21 @@ all_dir = []
 fig, axes = plt.subplots(1, 3, sharey=True, gridspec_kw={'wspace': 0})
 fig.set_figheight(4)
 fig.set_figwidth(15)
+import re
 for d in range(len(dirs)):
     # if dirs[d] not in need_dirs:
     #     continue
     dir_name = dirs[d]
-    # if dir_name.find('2.0_0.0_0.02') == -1:
+    if dir_name.find('simple') != -1:
+        continue
+    # if dir_name.find('max') == -1:
     #     continue
-    if dir_name.find('0.0_2.0_0.02') == -1:
-        continue
-    if dir_name.find('spars') == -1:
-        continue
-    if dir_name.find('t11_') == -1:
-        continue
-    # if dir_name.find('neg') == -1:
-    #     continue
-    # if re.match('t10_+', dir_name):
+    # if re.match('(t[1234]_)|(t43_)+', dir_name):
     #     continue
     all_dir.append(dirs[d])
-    fh_1 = open(os.path.join(path, dirs[d], 'horizontal_successes.txt')).readlines()
-    fv_1 = open(os.path.join(path, dirs[d], 'vertical_successes.txt')).readlines()
-    fd_1 = open(os.path.join(path, dirs[d], 'diagonal_successes.txt')).readlines()
+    fh_1 = open(os.path.join(path, dirs[d], 'horizontal_difqr.txt')).readlines()
+    fv_1 = open(os.path.join(path, dirs[d], 'vertical_difqr.txt')).readlines()
+    fd_1 = open(os.path.join(path, dirs[d], 'diagonal_difqr.txt')).readlines()
     acc_h_1 = []
     acc_v_1 = []
     acc_d_1 = []
@@ -69,15 +64,6 @@ for d in range(len(dirs)):
         acc_avg_v_1.append(sum(acc_v_1[start:end]) / avg_number)
         acc_avg_d_1.append(sum(acc_d_1[start:end]) / avg_number)
     print(dir_name, max(acc_h_1), max(acc_v_1), max(acc_d_1))
-    # color = 'red'
-    # if dir_name.find('simple') > 0:
-    #     color = 'blue'
-    # if dir_name.find('max') > 0:
-    #     color = 'green'
-    # if dir_name.find('min') > 0:
-    #     color = 'black'
-    # if dir_name.find('avg') > 0:
-    #     color = 'gray'
     axes[0].plot(acc_avg_h_1, linewidth=2)
     axes[1].plot(acc_avg_v_1, linewidth=2)
     axes[2].plot(acc_avg_d_1, linewidth=2)
@@ -86,7 +72,7 @@ for d in range(len(dirs)):
     axes[2].set_title('D')
     for ax in axes.flat:
         # ax.set_xlim([0,20])
-        ax.set_ylim([0, 100])
+        # ax.set_ylim([0, 100000])
         ax.set(xlabel='epochs')
     # plt.fill_between(range(0,201), acc1, acc2, color=colors[d], alpha=0.4)
 import matplotlib.patches as patches
